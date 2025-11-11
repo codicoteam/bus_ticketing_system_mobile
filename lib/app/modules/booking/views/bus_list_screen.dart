@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'booking_page.dart';
+import 'booking_screen.dart';
 
 class BusListPage extends StatefulWidget {
   final String from, to;

@@ -2,7 +2,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'ticket_page.dart';
+import '../../ticket/views/ticket_screen.dart';
 
 class BookingPage extends StatefulWidget {
   final String busName;
@@ -10,6 +10,7 @@ class BookingPage extends StatefulWidget {
   final String? departure;
   final String? arrival;
   final String? date;
+
 
   const BookingPage({
     super.key,

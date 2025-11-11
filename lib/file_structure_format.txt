@@ -1,0 +1,130 @@
+lib/
+│
+├── main.dart
+│
+├── app/
+│   ├── data/
+│   │   ├── models/
+│   │   │   ├── bus_model.dart
+│   │   │   ├── route_model.dart
+│   │   │   ├── ticket_model.dart
+│   │   │   ├── user_model.dart
+│   │   │   └── payment_model.dart
+│   │   │
+│   │   ├── services/
+│   │   │   ├── api_service.dart
+│   │   │   ├── auth_service.dart
+│   │   │   ├── database_service.dart
+│   │   │   ├── payment_service.dart
+│   │   │   └── storage_service.dart
+│   │   │
+│   │   ├── repositories/
+│   │   │   ├── user_repository.dart
+│   │   │   ├── bus_repository.dart
+│   │   │   └── ticket_repository.dart
+│   │   │
+│   │   └── providers/
+│   │       └── api_provider.dart
+│   │
+│   ├── modules/
+│   │   ├── auth/
+│   │   │   ├── bindings/auth_binding.dart
+│   │   │   ├── controllers/auth_controller.dart
+│   │   │   ├── views/login_view.dart
+│   │   │   ├── views/signup_view.dart
+│   │   │   └── views/forgot_password_view.dart
+│   │   │
+│   │   ├── home/
+│   │   │   ├── bindings/home_binding.dart
+│   │   │   ├── controllers/home_controller.dart
+│   │   │   ├── views/home_view.dart
+│   │   │   ├── views/bus_list_view.dart
+│   │   │   └── views/search_route_view.dart
+│   │   │
+│   │   ├── booking/
+│   │   │   ├── bindings/booking_binding.dart
+│   │   │   ├── controllers/booking_controller.dart
+│   │   │   ├── views/booking_view.dart
+│   │   │   └── views/seat_selection_view.dart
+│   │   │
+│   │   ├── ticket/
+│   │   │   ├── bindings/ticket_binding.dart
+│   │   │   ├── controllers/ticket_controller.dart
+│   │   │   ├── views/ticket_list_view.dart
+│   │   │   └── views/ticket_detail_view.dart
+│   │   │
+│   │   ├── profile/
+│   │   │   ├── bindings/profile_binding.dart
+│   │   │   ├── controllers/profile_controller.dart
+│   │   │   ├── views/profile_view.dart
+│   │   │   └── views/edit_profile_view.dart
+│   │   │
+│   │   └── payment/
+│   │       ├── bindings/payment_binding.dart
+│   │       ├── controllers/payment_controller.dart
+│   │       ├── views/payment_view.dart
+│   │       └── views/receipt_view.dart
+│   │
+│   ├── routes/
+│   │   ├── app_pages.dart
+│   │   └── app_routes.dart
+│   │
+│   ├── bindings/
+│   │   └── initial_binding.dart
+│   │
+│   ├── utils/
+│   │   ├── constants.dart
+│   │   ├── helpers.dart
+│   │   ├── theme.dart
+│   │   ├── validators.dart
+│   │   └── formatters.dart
+│   │
+│   ├── widgets/
+│   │   ├── custom_button.dart
+│   │   ├── custom_input_field.dart
+│   │   ├── ticket_card.dart
+│   │   ├── bus_card.dart
+│   │   └── empty_state.dart
+│   │
+│   └── localization/
+│       ├── en_US.json
+│       ├── fr_FR.json
+│       └── zu_ZA.json   # for local language support (optional)
+│
+└── core/
+    ├── bindings/
+    │   └── global_binding.dart
+    ├── theme/
+    │   ├── app_colors.dart
+    │   ├── app_text_styles.dart
+    │   └── app_theme.dart
+    ├── config/
+    │   ├── app_config.dart
+    │   └── env.dart
+    └── utils/
+        ├── logger.dart
+        ├── date_utils.dart
+        └── extensions.dart
+
+
+| Layer             | Description                                                                      |
+| ----------------- | -------------------------------------------------------------------------------- |
+| **models/**       | Dart data models for Bus, Ticket, User, etc.                                     |
+| **controllers/**  | Logic for each screen; holds observable (`Rx`) state variables.                  |
+| **views/**        | Flutter UI screens; listens to controller state using `Obx()` or `GetBuilder()`. |
+| **bindings/**     | Tells GetX which controller(s) to initialize when navigating to a route.         |
+| **services/**     | Handles external resources: APIs, databases, Firebase, or payments.              |
+| **repositories/** | Abstract data layer connecting services and controllers (optional but clean).    |
+| **routes/**       | Central route management (names + GetPages list).                                |
+| **utils/**        | Constants, validators, formatters, helpers.                                      |
+| **widgets/**      | Reusable UI components.                                                          |
+
+
+
+
+| Action     | What it does | Real-life meaning | Example in bus app      |
+| ---------- | ------------ | ----------------- | ----------------------- |
+| **GET**    | Fetch data   | “Show me”         | Get all available buses |
+| **POST**   | Add data     | “Create this”     | Register a new user     |
+| **PUT**    | Update data  | “Change this”     | Edit user profile       |
+| **DELETE** | Remove data  | “Delete this”     | Cancel ticket           |

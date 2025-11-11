@@ -1,24 +1,24 @@
-import 'package:busticket/pages/home_page.dart';
+import 'package:busticket/app/modules/auth/views/signup_screen.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:busticket/app/modules/auth/controllers/auth_controller.dart';
+import 'package:busticket/app/modules/home/views/home_screen.dart';
 
-class SignUpPage extends StatefulWidget {
-  const SignUpPage({super.key});
+class LoginScreen extends StatefulWidget {
+  const LoginScreen({super.key});
 
   @override
-  State<SignUpPage> createState() => _SignUpPageState();
+  State<LoginScreen> createState() => _LoginScreenState();
 }
 
-class _SignUpPageState extends State<SignUpPage> {
-  final _nameController = TextEditingController();
+class _LoginScreenState extends State<LoginScreen> {
   final _emailController = TextEditingController();
-  final _phoneController = TextEditingController();
   final _passwordController = TextEditingController();
-  final _confirmPasswordController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
+  final AuthController _authController = Get.find<AuthController>();
 
   bool _isPasswordVisible = false;
-  bool _isConfirmPasswordVisible = false;
-  bool _acceptTerms = false;
+  bool _rememberMe = false;
 
   @override
   Widget build(BuildContext context) {
@@ -29,7 +29,7 @@ class _SignUpPageState extends State<SignUpPage> {
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Color(0xFF1976D2)),
-          onPressed: () => Navigator.pop(context),
+          onPressed: () => Get.back(), // Changed to Get.back()
         ),
       ),
       body: SafeArea(
@@ -59,7 +59,7 @@ class _SignUpPageState extends State<SignUpPage> {
                   ),
                   const SizedBox(height: 30),
                   const Text(
-                    'Create Account',
+                    'Welcome Back',
                     style: TextStyle(
                       fontSize: 32,
                       fontWeight: FontWeight.bold,
@@ -68,25 +68,10 @@ class _SignUpPageState extends State<SignUpPage> {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    'Sign up to get started with BusTicket',
+                    'Sign in to continue your journey',
                     style: TextStyle(fontSize: 16, color: Colors.grey[600]),
                   ),
                   const SizedBox(height: 30),
-
-                  // Full Name
-                  _buildTextField(
-                    controller: _nameController,
-                    label: 'Full Name',
-                    hint: 'Enter your full name',
-                    icon: Icons.person_outline,
-                    validator: (value) {
-                      if (value?.isEmpty ?? true) {
-                        return 'Please enter your name';
-                      }
-                      return null;
-                    },
-                  ),
-                  const SizedBox(height: 16),
 
                   // Email
                   _buildTextField(
@@ -107,137 +92,84 @@ class _SignUpPageState extends State<SignUpPage> {
                   ),
                   const SizedBox(height: 16),
 
-                  // Phone Number
-                  _buildTextField(
-                    controller: _phoneController,
-                    label: 'Phone Number',
-                    hint: 'Enter your phone number',
-                    icon: Icons.phone_outlined,
-                    keyboardType: TextInputType.phone,
-                    validator: (value) {
-                      if (value?.isEmpty ?? true) {
-                        return 'Please enter your phone number';
-                      }
-                      if (value!.length < 10) {
-                        return 'Please enter a valid phone number';
-                      }
-                      return null;
-                    },
-                  ),
-                  const SizedBox(height: 16),
-
                   // Password
                   _buildTextField(
                     controller: _passwordController,
                     label: 'Password',
-                    hint: 'Create a password',
+                    hint: 'Enter your password',
                     icon: Icons.lock_outline,
                     isPassword: true,
-                    isConfirmPassword: false,
                     validator: (value) {
                       if (value?.isEmpty ?? true) {
-                        return 'Please enter a password';
-                      }
-                      if (value!.length < 6) {
-                        return 'Password must be at least 6 characters';
+                        return 'Please enter your password';
                       }
                       return null;
                     },
                   ),
                   const SizedBox(height: 16),
 
-                  // Confirm Password
-                  _buildTextField(
-                    controller: _confirmPasswordController,
-                    label: 'Confirm Password',
-                    hint: 'Re-enter your password',
-                    icon: Icons.lock_outline,
-                    isPassword: true,
-                    isConfirmPassword: true,
-                    validator: (value) {
-                      if (value?.isEmpty ?? true) {
-                        return 'Please confirm your password';
-                      }
-                      if (value != _passwordController.text) {
-                        return 'Passwords do not match';
-                      }
-                      return null;
-                    },
-                  ),
-                  const SizedBox(height: 16),
-
-                  // Accept Terms
+                  // Remember Me & Forgot Password
                   Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      SizedBox(
-                        height: 24,
-                        width: 24,
-                        child: Checkbox(
-                          value: _acceptTerms,
-                          onChanged: (value) {
-                            setState(() => _acceptTerms = value ?? false);
-                          },
-                          activeColor: const Color(0xFF1976D2),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(4),
+                      Row(
+                        children: [
+                          SizedBox(
+                            height: 24,
+                            width: 24,
+                            child: Checkbox(
+                              value: _rememberMe,
+                              onChanged: (value) {
+                                setState(() => _rememberMe = value ?? false);
+                              },
+                              activeColor: const Color(0xFF1976D2),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                            ),
                           ),
-                        ),
+                          const SizedBox(width: 8),
+                          const Text(
+                            'Remember me',
+                            style: TextStyle(
+                              color: Colors.black87,
+                            ),
+                          ),
+                        ],
                       ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Wrap(
-                          children: [
-                            const Text('I agree to the '),
-                            GestureDetector(
-                              onTap: () {},
-                              child: const Text(
-                                'Terms & Conditions',
-                                style: TextStyle(
-                                  color: Color(0xFF1976D2),
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                            ),
-                            const Text(' and '),
-                            GestureDetector(
-                              onTap: () {},
-                              child: const Text(
-                                'Privacy Policy',
-                                style: TextStyle(
-                                  color: Color(0xFF1976D2),
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                            ),
-                          ],
+                      TextButton(
+                        onPressed: () {
+                          Get.snackbar(
+                            'Forgot Password',
+                            'Feature coming soon!',
+                            backgroundColor: const Color(0xFF1976D2),
+                            colorText: Colors.white,
+                          );
+                        },
+                        style: TextButton.styleFrom(
+                          padding: EdgeInsets.zero,
+                          minimumSize: const Size(0, 0),
+                        ),
+                        child: const Text(
+                          'Forgot Password?',
+                          style: TextStyle(
+                            color: Color(0xFF1976D2),
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
                       ),
                     ],
                   ),
                   const SizedBox(height: 24),
 
-                  // Sign Up Button
-                  SizedBox(
+                  // Sign In Button
+                  Obx(() => SizedBox(
                     width: double.infinity,
                     height: 56,
                     child: ElevatedButton(
-                      onPressed: () {
-                        if (!_acceptTerms) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Please accept terms & conditions'),
-                              backgroundColor: Colors.red,
-                            ),
-                          );
-                          return;
-                        }
-                        if (_formKey.currentState!.validate()) {
-                          Navigator.pushReplacement(
-                            context,
-                            MaterialPageRoute(builder: (_) => const HomePage()),
-                          );
-                        }
-                      },
+                      onPressed: _authController.isLoading.value
+                          ? null
+                          : _handleSignIn, // Changed to _handleSignIn
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFF1976D2),
                         foregroundColor: Colors.white,
@@ -246,15 +178,24 @@ class _SignUpPageState extends State<SignUpPage> {
                         ),
                         elevation: 0,
                       ),
-                      child: const Text(
-                        'Sign Up',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
+                      child: _authController.isLoading.value
+                          ? const SizedBox(
+                              height: 20,
+                              width: 20,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                              ),
+                            )
+                          : const Text(
+                              'Sign In',
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
                     ),
-                  ),
+                  )),
 
                   const SizedBox(height: 20),
 
@@ -281,7 +222,9 @@ class _SignUpPageState extends State<SignUpPage> {
                         child: _buildSocialButton(
                           icon: Icons.g_mobiledata,
                           label: 'Google',
-                          onPressed: () {},
+                          onPressed: () {
+                            _handleGoogleSignIn();
+                          },
                         ),
                       ),
                       const SizedBox(width: 16),
@@ -289,36 +232,33 @@ class _SignUpPageState extends State<SignUpPage> {
                         child: _buildSocialButton(
                           icon: Icons.facebook,
                           label: 'Facebook',
-                          onPressed: () {},
+                          onPressed: () {
+                            _handleFacebookSignIn();
+                          },
                         ),
                       ),
                     ],
                   ),
                   const SizedBox(height: 24),
 
-                  // Already have an account? → Navigate to HomePage (Fixed)
+                  // Don't have an account?
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Text(
-                        'Already have an account? ',
+                        'Don\'t have an account? ',
                         style: TextStyle(color: Colors.grey[600]),
                       ),
                       TextButton(
                         onPressed: () {
-                          Navigator.pushReplacement(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => const HomePage(), // ✅ FIXED HERE
-                            ),
-                          );
+                          Get.off(() => const SignUpScreen()); // Changed to Get.off
                         },
                         style: TextButton.styleFrom(
                           padding: EdgeInsets.zero,
                           minimumSize: const Size(0, 0),
                         ),
                         child: const Text(
-                          'Sign In',
+                          'Sign Up',
                           style: TextStyle(
                             color: Color(0xFF1976D2),
                             fontWeight: FontWeight.w600,
@@ -336,6 +276,55 @@ class _SignUpPageState extends State<SignUpPage> {
     );
   }
 
+  void _handleSignIn() async { // Renamed from _signIn to _handleSignIn
+    if (_formKey.currentState!.validate()) {
+      final response = await _authController.signIn( // Now returns AuthResponse
+        email: _emailController.text.trim(),
+        password: _passwordController.text,
+        rememberMe: _rememberMe,
+      );
+
+      if (response.success) { // Check the success property
+        Get.offAll(() => const HomePage()); // Changed to Get.offAll
+      } else {
+        Get.snackbar(
+          'Login Failed',
+          response.message,
+          backgroundColor: Colors.red,
+          colorText: Colors.white,
+        );
+      }
+    }
+  }
+
+  void _handleGoogleSignIn() async {
+    final response = await _authController.signInWithGoogle();
+    if (response.success) {
+      Get.offAll(() => const HomePage());
+    } else {
+      Get.snackbar(
+        'Google Sign In Failed',
+        response.message,
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
+    }
+  }
+
+  void _handleFacebookSignIn() async {
+    final response = await _authController.signInWithFacebook();
+    if (response.success) {
+      Get.offAll(() => const HomePage());
+    } else {
+      Get.snackbar(
+        'Facebook Sign In Failed',
+        response.message,
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
+    }
+  }
+
   // ----------------- Helper Widgets -----------------
 
   Widget _buildTextField({
@@ -344,7 +333,6 @@ class _SignUpPageState extends State<SignUpPage> {
     required String hint,
     required IconData icon,
     bool isPassword = false,
-    bool isConfirmPassword = false,
     TextInputType? keyboardType,
     String? Function(String?)? validator,
   }) {
@@ -362,11 +350,7 @@ class _SignUpPageState extends State<SignUpPage> {
         const SizedBox(height: 8),
         TextFormField(
           controller: controller,
-          obscureText:
-              isPassword &&
-              (isConfirmPassword
-                  ? !_isConfirmPasswordVisible
-                  : !_isPasswordVisible),
+          obscureText: isPassword && !_isPasswordVisible,
           keyboardType: keyboardType,
           validator: validator,
           decoration: InputDecoration(
@@ -375,21 +359,14 @@ class _SignUpPageState extends State<SignUpPage> {
             suffixIcon: isPassword
                 ? IconButton(
                     icon: Icon(
-                      (isConfirmPassword
-                              ? _isConfirmPasswordVisible
-                              : _isPasswordVisible)
+                      _isPasswordVisible
                           ? Icons.visibility_outlined
                           : Icons.visibility_off_outlined,
                       color: Colors.grey,
                     ),
                     onPressed: () {
                       setState(() {
-                        if (isConfirmPassword) {
-                          _isConfirmPasswordVisible =
-                              !_isConfirmPasswordVisible;
-                        } else {
-                          _isPasswordVisible = !_isPasswordVisible;
-                        }
+                        _isPasswordVisible = !_isPasswordVisible;
                       });
                     },
                   )
@@ -450,11 +427,8 @@ class _SignUpPageState extends State<SignUpPage> {
 
   @override
   void dispose() {
-    _nameController.dispose();
     _emailController.dispose();
-    _phoneController.dispose();
     _passwordController.dispose();
-    _confirmPasswordController.dispose();
     super.dispose();
   }
 }

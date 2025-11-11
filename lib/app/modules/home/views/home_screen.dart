@@ -1,9 +1,9 @@
 // ignore_for_file: deprecated_member_use
 
-import 'notifications_page.dart';
+import '../../notifications/views/notifications_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'bus_list_page.dart';
+import '../../booking/views/bus_list_screen.dart';
 // Import the notifications page
 
 class HomePage extends StatefulWidget {
