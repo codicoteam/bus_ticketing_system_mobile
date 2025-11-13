@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'booking_screen.dart';
 
-class BusListPage extends StatefulWidget {
+class BusesScreen extends StatefulWidget {
   final String from, to;
   final DateTime date;
 
-  const BusListPage({
+  const BusesScreen({
     super.key,
     required this.from,
     required this.to,
@@ -13,14 +13,15 @@ class BusListPage extends StatefulWidget {
   });
 
   @override
-  State<BusListPage> createState() => _BusListPageState();
+  State<BusesScreen> createState() => _BusesScreenState();
 }
 
-class _BusListPageState extends State<BusListPage> {
+class _BusesScreenState extends State<BusesScreen> {
   String _sortBy = 'departure';
 
   List<Map<String, dynamic>> get _buses => [
     {
+      "tripId": "68d53eee51f58209f5654b47", // Add tripId
       "name": "RedBus",
       "type": "AC Sleeper (2+1)",
       "departureTime": "06:00 AM",
@@ -35,6 +36,7 @@ class _BusListPageState extends State<BusListPage> {
           "https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?w=400",
     },
     {
+      "tripId": "68d53eee51f58209f5654b48", // Add tripId
       "name": "VRL Travels",
       "type": "AC Seater (2+2)",
       "departureTime": "07:30 AM",
@@ -48,6 +50,7 @@ class _BusListPageState extends State<BusListPage> {
           "https://images.unsplash.com/photo-1570125909232-eb263c188f7e?w=400",
     },
     {
+      "tripId": "68d53eee51f58209f5654b49", // Add tripId
       "name": "Orange Travels",
       "type": "Non-AC Seater (2+3)",
       "departureTime": "08:00 AM",
@@ -61,6 +64,7 @@ class _BusListPageState extends State<BusListPage> {
           "https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?w=400",
     },
     {
+      "tripId": "68d53eee51f58209f5654b50", // Add tripId
       "name": "Volvo Luxury",
       "type": "Multi-Axle AC Sleeper",
       "departureTime": "09:00 AM",
@@ -75,6 +79,7 @@ class _BusListPageState extends State<BusListPage> {
           "https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?w=400",
     },
     {
+      "tripId": "68d53eee51f58209f5654b51", // Add tripId
       "name": "SRS Travels",
       "type": "AC Push Back (2+2)",
       "departureTime": "10:30 AM",
@@ -88,6 +93,7 @@ class _BusListPageState extends State<BusListPage> {
           "https://images.unsplash.com/photo-1570125909232-eb263c188f7e?w=400",
     },
     {
+      "tripId": "68d53eee51f58209f5654b52", // Add tripId
       "name": "Greenline Express",
       "type": "Non-AC Seater (2+2)",
       "departureTime": "11:00 AM",
@@ -101,6 +107,7 @@ class _BusListPageState extends State<BusListPage> {
           "https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?w=400",
     },
     {
+      "tripId": "68d53eee51f58209f5654b53", // Add tripId
       "name": "IntrCity SmartBus",
       "type": "AC Sleeper (2+1)",
       "departureTime": "01:00 PM",
@@ -114,6 +121,7 @@ class _BusListPageState extends State<BusListPage> {
           "https://images.unsplash.com/photo-1570125909232-eb263c188f7e?w=400",
     },
     {
+      "tripId": "68d53eee51f58209f5654b54", // Add tripId
       "name": "Kallada G4",
       "type": "AC Semi-Sleeper (2+2)",
       "departureTime": "03:00 PM",
@@ -127,6 +135,7 @@ class _BusListPageState extends State<BusListPage> {
           "https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?w=400",
     },
     {
+      "tripId": "68d53eee51f58209f5654b55", // Add tripId
       "name": "Parveen Travels",
       "type": "AC Sleeper (2+1)",
       "departureTime": "08:00 PM",
@@ -140,6 +149,7 @@ class _BusListPageState extends State<BusListPage> {
           "https://images.unsplash.com/photo-1570125909232-eb263c188f7e?w=400",
     },
     {
+      "tripId": "68d53eee51f58209f5654b56", // Add tripId
       "name": "Neeta Volvo",
       "type": "AC Sleeper (2+1)",
       "departureTime": "10:00 PM",
@@ -238,8 +248,14 @@ class _BusListPageState extends State<BusListPage> {
         onTap: () => Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (_) =>
-                BookingPage(busName: bus["name"]!, price: bus["price"]!),
+            builder: (_) => BookingScreen(
+              tripId: bus["tripId"]!, // Add tripId here
+              busName: bus["name"]!, 
+              price: bus["price"]!,
+              departure: widget.from, // Pass departure
+              arrival: widget.to,     // Pass arrival
+              date: "${widget.date.day}/${widget.date.month}/${widget.date.year}", // Pass date
+            ),
           ),
         ),
         child: Column(
@@ -465,9 +481,13 @@ class _BusListPageState extends State<BusListPage> {
                         onPressed: () => Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (_) => BookingPage(
+                            builder: (_) => BookingScreen(
+                              tripId: bus["tripId"]!, // Add tripId here
                               busName: bus["name"]!,
                               price: bus["price"]!,
+                              departure: widget.from, // Pass departure
+                              arrival: widget.to,     // Pass arrival
+                              date: "${widget.date.day}/${widget.date.month}/${widget.date.year}", // Pass date
                             ),
                           ),
                         ),

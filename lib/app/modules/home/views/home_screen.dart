@@ -3,17 +3,17 @@
 import '../../notifications/views/notifications_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import '../../booking/views/bus_list_screen.dart';
+import '../../booking/views/buses_screen.dart';
 // Import the notifications page
 
-class HomePage extends StatefulWidget {
-  const HomePage({super.key});
+class HomeScreen extends StatefulWidget {
+  const HomeScreen({super.key});
 
   @override
-  State<HomePage> createState() => _HomePageState();
+  State<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomePageState extends State<HomePage> {
+class _HomeScreenState extends State<HomeScreen> {
   final fromCtrl = TextEditingController();
   final toCtrl = TextEditingController();
   DateTime selectedDate = DateTime.now();
@@ -427,7 +427,7 @@ class _HomePageState extends State<HomePage> {
           Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (_) => BusListPage(
+              builder: (_) => BusesScreen(
                 from: fromCtrl.text,
                 to: toCtrl.text,
                 date: selectedDate,

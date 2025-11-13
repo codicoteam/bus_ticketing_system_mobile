@@ -285,7 +285,7 @@ class _LoginScreenState extends State<LoginScreen> {
       );
 
       if (response.success) { // Check the success property
-        Get.offAll(() => const HomePage()); // Changed to Get.offAll
+        Get.offAll(() => const HomeScreen()); // Changed to Get.offAll
       } else {
         Get.snackbar(
           'Login Failed',
@@ -300,7 +300,7 @@ class _LoginScreenState extends State<LoginScreen> {
   void _handleGoogleSignIn() async {
     final response = await _authController.signInWithGoogle();
     if (response.success) {
-      Get.offAll(() => const HomePage());
+      Get.offAll(() => const HomeScreen());
     } else {
       Get.snackbar(
         'Google Sign In Failed',
@@ -314,7 +314,7 @@ class _LoginScreenState extends State<LoginScreen> {
   void _handleFacebookSignIn() async {
     final response = await _authController.signInWithFacebook();
     if (response.success) {
-      Get.offAll(() => const HomePage());
+      Get.offAll(() => const HomeScreen());
     } else {
       Get.snackbar(
         'Facebook Sign In Failed',

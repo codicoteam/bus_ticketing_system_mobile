@@ -354,3 +354,134 @@ class AppBindings extends Bindings {
     Scalable: Easy to add new features
 
 Think of it like building with LEGO blocks - each piece has its purpose, and they snap together to make something awesome! 🧱✨
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+HTTP Status Codes Explained
+
+HTTP status codes are 3-digit numbers that tell you if a request was successful or not. They're like response codes from a server.
+Common Status Code Categories:
+
+    2xx = SUCCESS ✅
+
+    4xx = CLIENT ERROR ❌ (Your mistake)
+
+    5xx = SERVER ERROR ❌ (Server's mistake)
+
+Most Important Status Codes:
+dart
+
+// ✅ SUCCESS CODES (2xx)
+200 - OK (Everything worked)
+201 - Created (New resource was created - LIKE YOUR BOOKING!)
+202 - Accepted (Request received, still processing)
+204 - No Content (Success but no data returned)
+
+// ❌ CLIENT ERROR CODES (4xx)  
+400 - Bad Request (You sent invalid data)
+401 - Unauthorized (Not logged in)
+403 - Forbidden (Logged in but no permission)
+404 - Not Found (Resource doesn't exist)
+
+// ❌ SERVER ERROR CODES (5xx)
+500 - Internal Server Error (Server crashed)
+502 - Bad Gateway 
+503 - Service Unavailable
+
+Your Specific Case:
+
+Your API returns:
+dart
+
+Status Code: 201  // ✅ SUCCESS - Booking was created!
+Response Body: { booking data... }
+
+What I Meant by "Manually set to true for 201 responses":
+
+In your original code, you were checking for a success field in the JSON:
+dart
+
+// OLD CODE (WRONG)
+if (responseData['success'] == true) {  // ❌ This field doesn't exist!
+  // success logic
+}
+
+But your API doesn't return a success field. Instead, it uses HTTP status codes to indicate success.
+Fixed Code Explained:
+dart
+
+Future<BookingResponse> createBooking(BookingRequest bookingData) async {
+  try {
+    final response = await http.post(/*...*/);
+
+    print('Booking Response: ${response.statusCode} - ${response.body}');
+
+    if (response.statusCode == 201) {  // ✅ Check the STATUS CODE, not JSON field
+      final Map<String, dynamic> responseData = json.decode(response.body);
+      
+      return BookingResponse(
+        success: true, // 🎯 MANUALLY SET because 201 status = success
+        message: 'Booking created successfully',
+        booking: BookingData.fromJson(responseData),
+      );
+    } else {
+      // Handle error status codes (400, 401, 500, etc.)
+      return BookingResponse(
+        success: false, // 🎯 MANUALLY SET because non-201 status = failure
+        message: 'Booking failed',
+      );
+    }
+  } catch (e) {
+    // Handle network errors
+    return BookingResponse.error('Network error');
+  }
+}
+
+Real-World Analogy: 🍕
+
+Think of ordering pizza:
+
+    201 Created = "Pizza delivered successfully!" ✅
+
+    400 Bad Request = "You ordered pineapple pizza? That's invalid!" ❌
+
+    401 Unauthorized = "You didn't pay first!" ❌
+
+    500 Internal Error = "Our oven broke!" ❌
+
+Your API Flow:
+text
+
+Your App: "Create booking with this data" 📦
+    ↓
+API: "Got it! Status 201 - Booking Created!" ✅
+    ↓  
+API returns: { booking details... } 📄
+    ↓
+Your App: "201 status = SUCCESS! Show ticket" 🎫
+
+Summary:
+
+    Status Code 201 = "I successfully created your booking"
+
+    No success field in JSON = Your API doesn't need it because the status code says everything
+
+    "Manually set to true" = We're telling our app "201 status means success, even though there's no success field"
+
+So when you see 201 in the logs, CELEBRATE - your booking worked perfectly! 🎉
+

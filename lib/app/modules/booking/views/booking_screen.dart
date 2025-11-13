@@ -1,19 +1,21 @@
-// ignore_for_file: deprecated_member_use
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import '../../ticket/views/ticket_screen.dart';
+import 'package:get/get.dart';
+import 'package:busticket/app/modules/booking/controllers/booking_controller.dart';
+import 'package:busticket/app/modules/ticket/views/ticket_screen.dart';
+import '../../../data/models/booking_models.dart';
 
-class BookingPage extends StatefulWidget {
+class BookingScreen extends StatefulWidget {
+  final String tripId;
   final String busName;
   final String price;
   final String? departure;
   final String? arrival;
   final String? date;
 
-
-  const BookingPage({
+  const BookingScreen({
     super.key,
+    required this.tripId,
     required this.busName,
     required this.price,
     this.departure,
@@ -22,22 +24,33 @@ class BookingPage extends StatefulWidget {
   });
 
   @override
-  State<BookingPage> createState() => _BookingPageState();
+  State<BookingScreen> createState() => _BookingScreenState();
 }
 
-class _BookingPageState extends State<BookingPage> {
+class _BookingScreenState extends State<BookingScreen> {
   final _formKey = GlobalKey<FormState>();
+  final BookingController _bookingController = Get.find<BookingController>();
+
   final nameCtrl = TextEditingController();
   final emailCtrl = TextEditingController();
   final phoneCtrl = TextEditingController();
   final seatsCtrl = TextEditingController(text: '1');
-  final cardCtrl = TextEditingController();
-  final expiryCtrl = TextEditingController();
-  final cvvCtrl = TextEditingController();
-  final nameOnCardCtrl = TextEditingController();
+  final ageCtrl = TextEditingController(text: '25');
+  final idNumberCtrl = TextEditingController();
+  final boardingPointCtrl = TextEditingController();
+  final droppingPointCtrl = TextEditingController();
 
-  bool _isProcessing = false;
   String _selectedPaymentMethod = 'card';
+  String _selectedGender = 'Male';
+  String _selectedIdType = 'National ID';
+
+  @override
+  void initState() {
+    super.initState();
+    // Set default values
+    boardingPointCtrl.text = widget.departure ?? 'Main Station';
+    droppingPointCtrl.text = widget.arrival ?? 'Destination Station';
+  }
 
   @override
   void dispose() {
@@ -45,10 +58,10 @@ class _BookingPageState extends State<BookingPage> {
     emailCtrl.dispose();
     phoneCtrl.dispose();
     seatsCtrl.dispose();
-    cardCtrl.dispose();
-    expiryCtrl.dispose();
-    cvvCtrl.dispose();
-    nameOnCardCtrl.dispose();
+    ageCtrl.dispose();
+    idNumberCtrl.dispose();
+    boardingPointCtrl.dispose();
+    droppingPointCtrl.dispose();
     super.dispose();
   }
 
@@ -97,41 +110,20 @@ class _BookingPageState extends State<BookingPage> {
     return null;
   }
 
-  String? _validateCard(String? value) {
-    if (_selectedPaymentMethod != 'card') return null;
+  String? _validateAge(String? value) {
     if (value == null || value.isEmpty) {
-      return 'Please enter card number';
+      return 'Please enter age';
     }
-    final cleaned = value.replaceAll(' ', '');
-    if (cleaned.length < 13 || cleaned.length > 19) {
-      return 'Please enter a valid card number';
+    final age = int.tryParse(value);
+    if (age == null || age < 1 || age > 120) {
+      return 'Please enter a valid age';
     }
     return null;
   }
 
-  String? _validateExpiry(String? value) {
-    if (_selectedPaymentMethod != 'card') return null;
+  String? _validateRequired(String? value) {
     if (value == null || value.isEmpty) {
-      return 'Required';
-    }
-    if (!RegExp(r'^\d{2}/\d{2}$').hasMatch(value)) {
-      return 'Invalid format';
-    }
-    final parts = value.split('/');
-    final month = int.tryParse(parts[0]);
-    if (month == null || month < 1 || month > 12) {
-      return 'Invalid month';
-    }
-    return null;
-  }
-
-  String? _validateCVV(String? value) {
-    if (_selectedPaymentMethod != 'card') return null;
-    if (value == null || value.isEmpty) {
-      return 'Required';
-    }
-    if (value.length < 3 || value.length > 4) {
-      return 'Invalid CVV';
+      return 'This field is required';
     }
     return null;
   }
@@ -148,24 +140,57 @@ class _BookingPageState extends State<BookingPage> {
       return;
     }
 
-    setState(() => _isProcessing = true);
+    // Create proper Seat and PassengerDetail objects
+    final seats = [
+      Seat(
+        number: "A${seatsCtrl.text}",
+        fare: (double.parse(widget.price.replaceAll('\$', ''))).toInt(),
+      ),
+    ];
 
-    // Simulate payment processing
-    await Future.delayed(const Duration(seconds: 2));
+    final passengerDetails = [
+      PassengerDetail(
+        name: nameCtrl.text,
+        age: int.parse(ageCtrl.text),
+        gender: _selectedGender,
+        idType: _selectedIdType,
+        idNumber: idNumberCtrl.text.isEmpty
+            ? 'NOT_PROVIDED'
+            : idNumberCtrl.text,
+      ),
+    ];
 
-    if (!mounted) return;
+    // Create booking data according to your API
+    final bookingResponse = await _bookingController.createBooking(
+      tripId: widget.tripId,
+      seats: seats,
+      totalAmount: _calculateTotal().toInt(),
+      passengerDetails: passengerDetails,
+      boardingPoint: boardingPointCtrl.text,
+      droppingPoint: droppingPointCtrl.text,
+    );
 
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(
-        builder: (_) => TicketPage(
+    if (bookingResponse.success && bookingResponse.booking != null) {
+      Get.offAll(
+        () => TicketPage(
           name: nameCtrl.text,
           bus: widget.busName,
           price: _calculateTotal().toStringAsFixed(2),
           seats: seatsCtrl.text,
+          bookingId: bookingResponse.booking!.id,
+          departure: widget.departure, // Pass departure
+          arrival: widget.arrival, // Pass arrival
+          date: widget.date, // Pass date
         ),
-      ),
-    );
+      );
+    } else {
+      Get.snackbar(
+        'Booking Failed',
+        bookingResponse.message,
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
+    }
   }
 
   @override
@@ -233,6 +258,76 @@ class _BookingPageState extends State<BookingPage> {
                           ),
                           const SizedBox(height: 16),
                           TextFormField(
+                            controller: ageCtrl,
+                            validator: _validateAge,
+                            keyboardType: TextInputType.number,
+                            inputFormatters: [
+                              FilteringTextInputFormatter.digitsOnly,
+                            ],
+                            decoration: _inputDecoration(
+                              "Age",
+                              "25",
+                              Icons.cake_outlined,
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          // Gender Dropdown
+                          DropdownButtonFormField<String>(
+                            value: _selectedGender,
+                            decoration: _inputDecoration(
+                              "Gender",
+                              "Select Gender",
+                              Icons.person_outline,
+                            ),
+                            items: ['Male', 'Female', 'Other']
+                                .map(
+                                  (gender) => DropdownMenuItem(
+                                    value: gender,
+                                    child: Text(gender),
+                                  ),
+                                )
+                                .toList(),
+                            onChanged: (value) {
+                              setState(() {
+                                _selectedGender = value!;
+                              });
+                            },
+                          ),
+                          const SizedBox(height: 16),
+                          // ID Type Dropdown
+                          DropdownButtonFormField<String>(
+                            value: _selectedIdType,
+                            decoration: _inputDecoration(
+                              "ID Type",
+                              "Select ID Type",
+                              Icons.badge_outlined,
+                            ),
+                            items:
+                                ['National ID', 'Passport', 'Driving License']
+                                    .map(
+                                      (idType) => DropdownMenuItem(
+                                        value: idType,
+                                        child: Text(idType),
+                                      ),
+                                    )
+                                    .toList(),
+                            onChanged: (value) {
+                              setState(() {
+                                _selectedIdType = value!;
+                              });
+                            },
+                          ),
+                          const SizedBox(height: 16),
+                          TextFormField(
+                            controller: idNumberCtrl,
+                            decoration: _inputDecoration(
+                              "ID Number (Optional)",
+                              "ID123456",
+                              Icons.numbers_outlined,
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          TextFormField(
                             controller: seatsCtrl,
                             validator: _validateSeats,
                             keyboardType: TextInputType.number,
@@ -245,6 +340,26 @@ class _BookingPageState extends State<BookingPage> {
                               Icons.event_seat_outlined,
                             ),
                             onChanged: (_) => setState(() {}),
+                          ),
+                          const SizedBox(height: 16),
+                          TextFormField(
+                            controller: boardingPointCtrl,
+                            validator: _validateRequired,
+                            decoration: _inputDecoration(
+                              "Boarding Point",
+                              "Main Station",
+                              Icons.location_on_outlined,
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          TextFormField(
+                            controller: droppingPointCtrl,
+                            validator: _validateRequired,
+                            decoration: _inputDecoration(
+                              "Dropping Point",
+                              "Destination Station",
+                              Icons.location_on_outlined,
+                            ),
                           ),
                         ],
                       ),
@@ -287,9 +402,6 @@ class _BookingPageState extends State<BookingPage> {
                         child: Column(
                           children: [
                             TextFormField(
-                              controller: nameOnCardCtrl,
-                              validator: _validateName,
-                              textCapitalization: TextCapitalization.words,
                               decoration: _inputDecoration(
                                 "Name on Card",
                                 "John Doe",
@@ -298,8 +410,6 @@ class _BookingPageState extends State<BookingPage> {
                             ),
                             const SizedBox(height: 16),
                             TextFormField(
-                              controller: cardCtrl,
-                              validator: _validateCard,
                               keyboardType: TextInputType.number,
                               inputFormatters: [
                                 FilteringTextInputFormatter.digitsOnly,
@@ -316,8 +426,6 @@ class _BookingPageState extends State<BookingPage> {
                               children: [
                                 Expanded(
                                   child: TextFormField(
-                                    controller: expiryCtrl,
-                                    validator: _validateExpiry,
                                     keyboardType: TextInputType.number,
                                     inputFormatters: [
                                       FilteringTextInputFormatter.digitsOnly,
@@ -333,8 +441,6 @@ class _BookingPageState extends State<BookingPage> {
                                 const SizedBox(width: 16),
                                 Expanded(
                                   child: TextFormField(
-                                    controller: cvvCtrl,
-                                    validator: _validateCVV,
                                     keyboardType: TextInputType.number,
                                     obscureText: true,
                                     inputFormatters: [
@@ -468,7 +574,7 @@ class _BookingPageState extends State<BookingPage> {
             ),
 
             // Bottom Payment Summary
-            _buildBottomBar(),
+            Obx(() => _buildBottomBar()),
           ],
         ),
       ),
@@ -575,6 +681,24 @@ class _BookingPageState extends State<BookingPage> {
                 style: const TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                "Total Amount",
+                style: TextStyle(fontSize: 14, color: Colors.grey[600]),
+              ),
+              Text(
+                "\$${_calculateTotal().toStringAsFixed(2)}",
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.blue,
                 ),
               ),
             ],
@@ -744,8 +868,10 @@ class _BookingPageState extends State<BookingPage> {
                     ),
                     elevation: 0,
                   ),
-                  onPressed: _isProcessing ? null : _processBooking,
-                  child: _isProcessing
+                  onPressed: _bookingController.isLoading.value
+                      ? null
+                      : _processBooking,
+                  child: _bookingController.isLoading.value
                       ? const SizedBox(
                           width: 20,
                           height: 20,

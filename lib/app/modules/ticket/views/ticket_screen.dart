@@ -6,6 +6,10 @@ class TicketPage extends StatelessWidget {
   final String bus;
   final String price;
   final String seats;
+  final String bookingId;
+  final String? departure; // Add this
+  final String? arrival;   // Add this
+  final String? date;      // Add this
 
   const TicketPage({
     super.key,
@@ -13,6 +17,10 @@ class TicketPage extends StatelessWidget {
     required this.bus,
     required this.price,
     required this.seats,
+    required this.bookingId,
+    this.departure,        // Add this
+    this.arrival,          // Add this
+    this.date,             // Add this
   });
 
   String _generateBookingRef() {
