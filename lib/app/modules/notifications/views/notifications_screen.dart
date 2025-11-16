@@ -1,85 +1,41 @@
-// ignore_for_file: deprecated_member_use
-
+// lib/app/modules/notifications/views/notifications_screen.dart
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import '../../../data/models/notification_models.dart';
+import '../controllers/notification_controller.dart';
 
-class NotificationsPage extends StatefulWidget {
-  const NotificationsPage({super.key});
+class NotificationsScreen extends StatefulWidget {
+  const NotificationsScreen({super.key});
 
   @override
-  State<NotificationsPage> createState() => _NotificationsPageState();
+  State<NotificationsScreen> createState() => _NotificationsScreenState();
 }
 
-class _NotificationsPageState extends State<NotificationsPage> {
-  // Sample notification data - replace with your actual data source
-  final List<NotificationItem> notifications = [
-    NotificationItem(
-      id: '1',
-      title: 'Booking Confirmed',
-      message:
-          'Your ticket for Harare to Bulawayo has been confirmed. Bus departs at 08:00 AM.',
-      type: NotificationType.booking,
-      timestamp: DateTime.now().subtract(const Duration(hours: 2)),
-      isRead: false,
-    ),
-    NotificationItem(
-      id: '2',
-      title: 'Payment Successful',
-      message: 'Payment of \$25.00 received for booking #BT2024001',
-      type: NotificationType.payment,
-      timestamp: DateTime.now().subtract(const Duration(hours: 3)),
-      isRead: false,
-    ),
-    NotificationItem(
-      id: '3',
-      title: 'Departure Reminder',
-      message: 'Your bus departs in 2 hours. Please arrive 30 minutes early.',
-      type: NotificationType.reminder,
-      timestamp: DateTime.now().subtract(const Duration(hours: 6)),
-      isRead: true,
-    ),
-    NotificationItem(
-      id: '4',
-      title: 'Special Offer',
-      message: 'Get 20% off on weekend bookings! Valid until Sunday.',
-      type: NotificationType.promotion,
-      timestamp: DateTime.now().subtract(const Duration(days: 1)),
-      isRead: true,
-    ),
-    NotificationItem(
-      id: '5',
-      title: 'Schedule Change',
-      message:
-          'Route HRE-BYO departure time changed to 09:00 AM due to maintenance.',
-      type: NotificationType.alert,
-      timestamp: DateTime.now().subtract(const Duration(days: 2)),
-      isRead: true,
-    ),
-  ];
+class _NotificationsScreenState extends State<NotificationsScreen> {
+  final NotificationController _notificationController = Get.find<NotificationController>();
+
+  @override
+  void initState() {
+    super.initState();
+    // Fetch notifications when screen loads
+    _notificationController.fetchNotifications();
+    _notificationController.fetchUnreadCount();
+  }
 
   void _markAsRead(String id) {
-    setState(() {
-      final index = notifications.indexWhere((n) => n.id == id);
-      if (index != -1) {
-        notifications[index].isRead = true;
-      }
-    });
+    _notificationController.markAsRead(id);
   }
 
   void _markAllAsRead() {
-    setState(() {
-      for (var notification in notifications) {
-        notification.isRead = true;
-      }
-    });
+    _notificationController.markAllAsRead();
   }
 
   void _deleteNotification(String id) {
-    setState(() {
-      notifications.removeWhere((n) => n.id == id);
-    });
+    // Note: Your API doesn't have delete endpoint, so we'll just remove from local list
+    _notificationController.notifications.removeWhere((n) => n.id == id);
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
-        content: Text('Notification deleted'),
+        content: Text('Notification removed'),
         duration: Duration(seconds: 2),
       ),
     );
@@ -87,8 +43,6 @@ class _NotificationsPageState extends State<NotificationsPage> {
 
   @override
   Widget build(BuildContext context) {
-    final unreadCount = notifications.where((n) => !n.isRead).length;
-
     return Scaffold(
       appBar: AppBar(
         title: const Text('Notifications'),
@@ -96,48 +50,87 @@ class _NotificationsPageState extends State<NotificationsPage> {
         foregroundColor: Colors.white,
         elevation: 0,
         actions: [
-          if (unreadCount > 0)
-            TextButton.icon(
-              onPressed: _markAllAsRead,
-              icon: const Icon(Icons.done_all, color: Colors.white, size: 20),
-              label: const Text(
-                'Mark all read',
-                style: TextStyle(color: Colors.white),
-              ),
-            ),
+          Obx(() {
+            if (_notificationController.unreadCount.value > 0) {
+              return TextButton.icon(
+                onPressed: _markAllAsRead,
+                icon: const Icon(Icons.done_all, color: Colors.white, size: 20),
+                label: const Text(
+                  'Mark all read',
+                  style: TextStyle(color: Colors.white),
+                ),
+              );
+            }
+            return const SizedBox();
+          }),
         ],
       ),
-      body: notifications.isEmpty
-          ? _buildEmptyState()
-          : Column(
-              children: [
-                if (unreadCount > 0)
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 12,
-                    ),
-                    color: Colors.blue[50],
-                    child: Text(
-                      '$unreadCount new notification${unreadCount > 1 ? 's' : ''}',
-                      style: TextStyle(
-                        color: Colors.blue[700],
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
-                Expanded(
-                  child: ListView.builder(
-                    itemCount: notifications.length,
-                    itemBuilder: (context, index) {
-                      final notification = notifications[index];
-                      return _buildNotificationCard(notification);
-                    },
-                  ),
-                ),
-              ],
+      body: Obx(() {
+        if (_notificationController.isLoading.value) {
+          return _buildLoadingState();
+        }
+
+        if (_notificationController.errorMessage.isNotEmpty) {
+          return _buildErrorState();
+        }
+
+        if (_notificationController.notifications.isEmpty) {
+          return _buildEmptyState();
+        }
+
+        return _buildNotificationsList();
+      }),
+    );
+  }
+
+  Widget _buildLoadingState() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          CircularProgressIndicator(),
+          SizedBox(height: 16),
+          Text(
+            'Loading notifications...',
+            style: TextStyle(fontSize: 16, color: Colors.grey[600]),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildErrorState() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            Icons.error_outline,
+            size: 80,
+            color: Colors.red[400],
+          ),
+          SizedBox(height: 16),
+          Text(
+            'Failed to load notifications',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w600,
+              color: Colors.grey[700],
             ),
+          ),
+          SizedBox(height: 8),
+          Text(
+            _notificationController.errorMessage.value,
+            style: TextStyle(fontSize: 14, color: Colors.grey[600]),
+            textAlign: TextAlign.center,
+          ),
+          SizedBox(height: 16),
+          ElevatedButton(
+            onPressed: _notificationController.fetchNotifications,
+            child: Text('Try Again'),
+          ),
+        ],
+      ),
     );
   }
 
@@ -151,7 +144,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
             size: 80,
             color: Colors.grey[400],
           ),
-          const SizedBox(height: 16),
+          SizedBox(height: 16),
           Text(
             'No notifications yet',
             style: TextStyle(
@@ -160,7 +153,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
               color: Colors.grey[700],
             ),
           ),
-          const SizedBox(height: 8),
+          SizedBox(height: 8),
           Text(
             'You\'ll see updates about your bookings here',
             style: TextStyle(fontSize: 14, color: Colors.grey[600]),
@@ -170,7 +163,46 @@ class _NotificationsPageState extends State<NotificationsPage> {
     );
   }
 
-  Widget _buildNotificationCard(NotificationItem notification) {
+  Widget _buildNotificationsList() {
+    return RefreshIndicator(
+      onRefresh: () => _notificationController.refreshNotifications(),
+      child: Column(
+        children: [
+          Obx(() {
+            if (_notificationController.unreadCount.value > 0) {
+              return Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 12,
+                ),
+                color: Colors.blue[50],
+                child: Text(
+                  '${_notificationController.unreadCount.value} new notification${_notificationController.unreadCount.value > 1 ? 's' : ''}',
+                  style: TextStyle(
+                    color: Colors.blue[700],
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              );
+            }
+            return SizedBox();
+          }),
+          Expanded(
+            child: ListView.builder(
+              itemCount: _notificationController.notifications.length,
+              itemBuilder: (context, index) {
+                final notification = _notificationController.notifications[index];
+                return _buildNotificationCard(notification);
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildNotificationCard(NotificationModel notification) {
     return Dismissible(
       key: Key(notification.id),
       direction: DismissDirection.endToStart,
@@ -185,8 +217,9 @@ class _NotificationsPageState extends State<NotificationsPage> {
       ),
       child: InkWell(
         onTap: () {
-          _markAsRead(notification.id);
-          // Navigate to relevant page based on notification type
+          if (!notification.isRead) {
+            _markAsRead(notification.id);
+          }
           _handleNotificationTap(notification);
         },
         child: Container(
@@ -200,7 +233,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 _buildNotificationIcon(notification.type),
-                const SizedBox(width: 12),
+                SizedBox(width: 12),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -229,7 +262,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
                             ),
                         ],
                       ),
-                      const SizedBox(height: 6),
+                      SizedBox(height: 6),
                       Text(
                         notification.message,
                         style: TextStyle(
@@ -238,9 +271,9 @@ class _NotificationsPageState extends State<NotificationsPage> {
                           height: 1.4,
                         ),
                       ),
-                      const SizedBox(height: 8),
+                      SizedBox(height: 8),
                       Text(
-                        _formatTimestamp(notification.timestamp),
+                        _formatTimestamp(notification.createdAt),
                         style: TextStyle(fontSize: 12, color: Colors.grey[600]),
                       ),
                     ],
@@ -279,6 +312,10 @@ class _NotificationsPageState extends State<NotificationsPage> {
         icon = Icons.warning;
         color = Colors.red;
         break;
+      case NotificationType.general:
+        icon = Icons.notifications;
+        color = Colors.grey;
+        break;
     }
 
     return Container(
@@ -306,61 +343,35 @@ class _NotificationsPageState extends State<NotificationsPage> {
     }
   }
 
-  void _handleNotificationTap(NotificationItem notification) {
+  void _handleNotificationTap(NotificationModel notification) {
     // Handle navigation based on notification type
     switch (notification.type) {
       case NotificationType.booking:
-        // Navigate to booking details
-        // Navigator.push(context, MaterialPageRoute(builder: (context) => BookingDetailsPage()));
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Opening booking details...')),
         );
         break;
       case NotificationType.payment:
-        // Navigate to payment history
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Opening payment details...')),
         );
         break;
       case NotificationType.reminder:
-        // Navigate to ticket
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('Opening ticket...')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Opening ticket...')));
         break;
       case NotificationType.promotion:
-        // Navigate to offers page
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('Opening offers...')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Opening offers...')));
         break;
       case NotificationType.alert:
-        // Show alert details
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('Viewing alert...')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Viewing alert...')));
+        break;
+      case NotificationType.general:
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Viewing notification...')));
         break;
     }
   }
-}
-
-// Models
-enum NotificationType { booking, payment, reminder, promotion, alert }
-
-class NotificationItem {
-  final String id;
-  final String title;
-  final String message;
-  final NotificationType type;
-  final DateTime timestamp;
-  bool isRead;
-
-  NotificationItem({
-    required this.id,
-    required this.title,
-    required this.message,
-    required this.type,
-    required this.timestamp,
-    this.isRead = false,
-  });
 }

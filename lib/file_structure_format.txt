@@ -119,7 +119,7 @@ lib/
 | **utils/**        | Constants, validators, formatters, helpers.                                      |
 | **widgets/**      | Reusable UI components.                                                          |
 
-
+https://busticketing-tq3o.onrender.com/api-docs/#/Auth/post_api_auth_register
 
 
 | Action     | What it does | Real-life meaning | Example in bus app      |
@@ -485,3 +485,837 @@ Summary:
 
 So when you see 201 in the logs, CELEBRATE - your booking worked perfectly! 🎉
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+I'M GOING TO BE USING "Swagger App" FOR MY BACKEND.
+
+ENDPOINT DETAILS:
+
+    Method: GET
+
+    URL: https://busticketing-tq3o.onrender.com/api/users/profile
+
+    Purpose: Get logged-in user's profile
+
+    Swagger Link: https://busticketing-tq3o.onrender.com/api-docs/#/Users/get_api_users_profile
+
+RESPONSE:
+
+    Success Code: 200
+
+    Response Body:
+
+json
+
+{
+  "success": true,
+  "message": "User profile fetched successfully",
+  "user": {
+    "_id": "123",
+    "name": "John Doe",
+    "email": "john@example.com",
+    "phone": "+1234567890"
+  }
+}
+
+MY CURRENT SCREEN:
+ProfileScreen that shows user information (currently using mock data).
+
+WHAT I NEED:
+Connect this screen to the backend API using GetX to show real user data.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+OK I AM GOING TO BE GIVING YOU THE ACTUAL "TRIP" API THAT I HAVE I'M GOING TO BE USING "Swagger App" FOR MY BACKEND.
+
+ENDPOINT DETAILS:
+
+    Method: GET
+
+    URL: /api/trips
+
+    Purpose: List of all trips
+
+    Swagger Link: https://busticketing-tq3o.onrender.com/api-docs/#/Trips/get_api_trips
+
+RESPONSE:
+
+    Success Code: 200
+
+    Response Body:
+
+json
+
+No parameters
+
+MY CURRENT SCREEN:
+None create one for me
+WHAT I NEED:
+Connect this screen to the backend API using GetX to show real user data.
+
+
+ OK THERE IS AN ACTION "POST" HIGLIGHETED LIKE THE FOLLOWING "POST      //api/routes  Create a new bus (Admin only)" WITH THE FOLLOWING JSON FILE{
+  "name": "NYC to Boston Express",
+  "origin": "New York",
+  "destination": "Boston",
+  "distance": 350,
+  "duration": 240,
+  "stops": [
+    {
+      "name": "Stamford",
+      "distanceFromOrigin": 50,
+      "arrivalTime": "10:30 AM"
+    }
+  ],
+  "arrivalTime": "02:00 PM",
+  "departureTime": "08:00 AM",
+  "baseFare": 45
+}WITH LINK "https://busticketing-tq3o.onrender.com/api-docs/#/Routes/post_api_routes" BELOW IS MY MODEL I GOT FROM "QuickType" import 'dart:convert';
+
+class RoutesModel {
+    final String? name;
+    final String? origin;
+    final String? destination;
+    final int? distance;
+    final int? duration;
+    final List<Stop>? stops;
+    final String? arrivalTime;
+    final String? departureTime;
+    final int? baseFare;
+
+    RoutesModel({
+        this.name,
+        this.origin,
+        this.destination,
+        this.distance,
+        this.duration,
+        this.stops,
+        this.arrivalTime,
+        this.departureTime,
+        this.baseFare,
+    });
+
+    factory RoutesModel.fromRawJson(String str) => RoutesModel.fromJson(json.decode(str));
+
+    String toRawJson() => json.encode(toJson());
+
+    factory RoutesModel.fromJson(Map<String, dynamic> json) => RoutesModel(
+        name: json["name"],
+        origin: json["origin"],
+        destination: json["destination"],
+        distance: json["distance"],
+        duration: json["duration"],
+        stops: json["stops"] == null ? [] : List<Stop>.from(json["stops"]!.map((x) => Stop.fromJson(x))),
+        arrivalTime: json["arrivalTime"],
+        departureTime: json["departureTime"],
+        baseFare: json["baseFare"],
+    );
+
+    Map<String, dynamic> toJson() => {
+        "name": name,
+        "origin": origin,
+        "destination": destination,
+        "distance": distance,
+        "duration": duration,
+        "stops": stops == null ? [] : List<dynamic>.from(stops!.map((x) => x.toJson())),
+        "arrivalTime": arrivalTime,
+        "departureTime": departureTime,
+        "baseFare": baseFare,
+    };
+}
+
+class Stop {
+    final String? name;
+    final int? distanceFromOrigin;
+    final String? arrivalTime;
+
+    Stop({
+        this.name,
+        this.distanceFromOrigin,
+        this.arrivalTime,
+    });
+
+    factory Stop.fromRawJson(String str) => Stop.fromJson(json.decode(str));
+
+    String toRawJson() => json.encode(toJson());
+
+    factory Stop.fromJson(Map<String, dynamic> json) => Stop(
+        name: json["name"],
+        distanceFromOrigin: json["distanceFromOrigin"],
+        arrivalTime: json["arrivalTime"],
+    );
+
+    Map<String, dynamic> toJson() => {
+        "name": name,
+        "distanceFromOrigin": distanceFromOrigin,
+        "arrivalTime": arrivalTime,
+    };
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+OK NOW I AM GOING TO BE USING "Swagger App ", I DIDNT CREATE THE BACKEND SO I NOW WANT TO PUT THE DATA, SO SHOULD I INCLUDE THE MODEL FILE AS THE FOLLOWING FOR MY "BusesScreen" , HERE IS THE CATCH THAT I DONT UNDERSTAND, IN MY "Swagger" UI (BACKEND) UNDER ""Buses Bus management API" THERE IS AN ACTION "POST" HIGLIGHETED LIKE THE FOLLOWING "POST      /api/buses  Create a new bus (Admin only)" WITH THE FOLLOWING JSON FILE {
+  "busNumber": "BUS-001",
+  "operator": "Volvo Bus Company",
+  "model": "Volvo B9R",
+  "capacity": 40,
+  "amenities": [
+    "AC",
+    "WiFi",
+    "Charging Ports"
+  ],
+  "seats": [
+    {
+      "number": "A1",
+      "isAvailable": true,
+      "type": "standard"
+    }
+  ]
+} WITH LINK "https://busticketing-tq3o.onrender.com/api-docs/#/Buses/post_api_buses" THE RESPONSE 201	 Bus created successfully No links.
+ BUT SINCE ITS "POST" AND "FOR ADMINS ONLY", I NEED TO BE USING THE "GET" ACTION TO DISPLAY THE BUSES IN MY SCREEN,AND UNDER THE ACTION "GET" I HAVE NOTHING LIKE THE JSON FILE UNDER IT ,WHATS BEING DISPLAYED ON MY UI IS "Parameters
+
+No parameters
+Responses
+Code	Description	Links
+200	List of all buses     No links"  AND "https://busticketing-tq3o.onrender.com/api-docs/#/Buses/get_api_buses" SO HOW DO I GO ABOUT IT CONNECTING MY SCREENS,CONTROLLERS, SERVICES AND MODELS 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+import 'package:flutter/material.dart';
+import '../../booking/views/booking_screen.dart';
+
+class BusesScreen extends StatefulWidget {
+  final String from, to;
+  final DateTime date;
+
+  const BusesScreen({
+    super.key,
+    required this.from,
+    required this.to,
+    required this.date,
+  });
+
+  @override
+  State<BusesScreen> createState() => _BusesScreenState();
+}
+
+class _BusesScreenState extends State<BusesScreen> {
+  String _sortBy = 'departure';
+
+  List<Map<String, dynamic>> get _buses => [
+    {
+      "tripId": "68d53eee51f58209f5654b47", // Add tripId
+      "name": "RedBus",
+      "type": "AC Sleeper (2+1)",
+      "departureTime": "06:00 AM",
+      "arrivalTime": "02:00 PM",
+      "duration": "8h 0m",
+      "price": "\$25",
+      "originalPrice": "\$30",
+      "rating": "4.5",
+      "seats": 12,
+      "amenities": ["wifi", "charging", "water", "blanket"],
+      "image":
+          "https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?w=400",
+    },
+    {
+      "tripId": "68d53eee51f58209f5654b48", // Add tripId
+      "name": "VRL Travels",
+      "type": "AC Seater (2+2)",
+      "departureTime": "07:30 AM",
+      "arrivalTime": "02:00 PM",
+      "duration": "6h 30m",
+      "price": "\$18",
+      "rating": "4.2",
+      "seats": 8,
+      "amenities": ["wifi", "charging"],
+      "image":
+          "https://images.unsplash.com/photo-1570125909232-eb263c188f7e?w=400",
+    },
+    {
+      "tripId": "68d53eee51f58209f5654b49", // Add tripId
+      "name": "Orange Travels",
+      "type": "Non-AC Seater (2+3)",
+      "departureTime": "08:00 AM",
+      "arrivalTime": "03:00 PM",
+      "duration": "7h 0m",
+      "price": "\$12",
+      "rating": "3.8",
+      "seats": 20,
+      "amenities": ["water"],
+      "image":
+          "https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?w=400",
+    },
+    {
+      "tripId": "68d53eee51f58209f5654b50", // Add tripId
+      "name": "Volvo Luxury",
+      "type": "Multi-Axle AC Sleeper",
+      "departureTime": "09:00 AM",
+      "arrivalTime": "04:30 PM",
+      "duration": "7h 30m",
+      "price": "\$35",
+      "originalPrice": "\$40",
+      "rating": "4.8",
+      "seats": 5,
+      "amenities": ["wifi", "charging", "water", "blanket"],
+      "image":
+          "https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?w=400",
+    },
+    {
+      "tripId": "68d53eee51f58209f5654b51", // Add tripId
+      "name": "SRS Travels",
+      "type": "AC Push Back (2+2)",
+      "departureTime": "10:30 AM",
+      "arrivalTime": "05:00 PM",
+      "duration": "6h 30m",
+      "price": "\$22",
+      "rating": "4.3",
+      "seats": 15,
+      "amenities": ["wifi", "charging", "water"],
+      "image":
+          "https://images.unsplash.com/photo-1570125909232-eb263c188f7e?w=400",
+    },
+    {
+      "tripId": "68d53eee51f58209f5654b52", // Add tripId
+      "name": "Greenline Express",
+      "type": "Non-AC Seater (2+2)",
+      "departureTime": "11:00 AM",
+      "arrivalTime": "06:00 PM",
+      "duration": "7h 0m",
+      "price": "\$15",
+      "rating": "4.0",
+      "seats": 18,
+      "amenities": ["charging", "water"],
+      "image":
+          "https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?w=400",
+    },
+    {
+      "tripId": "68d53eee51f58209f5654b53", // Add tripId
+      "name": "IntrCity SmartBus",
+      "type": "AC Sleeper (2+1)",
+      "departureTime": "01:00 PM",
+      "arrivalTime": "08:30 PM",
+      "duration": "7h 30m",
+      "price": "\$28",
+      "rating": "4.4",
+      "seats": 10,
+      "amenities": ["wifi", "charging", "water", "blanket"],
+      "image":
+          "https://images.unsplash.com/photo-1570125909232-eb263c188f7e?w=400",
+    },
+    {
+      "tripId": "68d53eee51f58209f5654b54", // Add tripId
+      "name": "Kallada G4",
+      "type": "AC Semi-Sleeper (2+2)",
+      "departureTime": "03:00 PM",
+      "arrivalTime": "10:00 PM",
+      "duration": "7h 0m",
+      "price": "\$20",
+      "rating": "4.1",
+      "seats": 14,
+      "amenities": ["charging", "water"],
+      "image":
+          "https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?w=400",
+    },
+    {
+      "tripId": "68d53eee51f58209f5654b55", // Add tripId
+      "name": "Parveen Travels",
+      "type": "AC Sleeper (2+1)",
+      "departureTime": "08:00 PM",
+      "arrivalTime": "05:00 AM",
+      "duration": "9h 0m",
+      "price": "\$30",
+      "rating": "4.6",
+      "seats": 7,
+      "amenities": ["wifi", "charging", "water", "blanket"],
+      "image":
+          "https://images.unsplash.com/photo-1570125909232-eb263c188f7e?w=400",
+    },
+    {
+      "tripId": "68d53eee51f58209f5654b56", // Add tripId
+      "name": "Neeta Volvo",
+      "type": "AC Sleeper (2+1)",
+      "departureTime": "10:00 PM",
+      "arrivalTime": "06:30 AM",
+      "duration": "8h 30m",
+      "price": "\$32",
+      "originalPrice": "\$38",
+      "rating": "4.7",
+      "seats": 6,
+      "amenities": ["wifi", "charging", "water", "blanket"],
+      "image":
+          "https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?w=400",
+    },
+  ];
+
+  List<Map<String, dynamic>> get _sortedBuses {
+    final sorted = List<Map<String, dynamic>>.from(_buses);
+    switch (_sortBy) {
+      case 'price':
+        sorted.sort(
+          (a, b) => int.parse(
+            a["price"]!.replaceAll(RegExp(r'[^\d]'), ''),
+          ).compareTo(int.parse(b["price"]!.replaceAll(RegExp(r'[^\d]'), ''))),
+        );
+        break;
+      case 'duration':
+        sorted.sort((a, b) => a["duration"]!.compareTo(b["duration"]!));
+        break;
+      case 'rating':
+        sorted.sort(
+          (a, b) =>
+              double.parse(b["rating"]!).compareTo(double.parse(a["rating"]!)),
+        );
+        break;
+      default:
+        sorted.sort(
+          (a, b) => a["departureTime"]!.compareTo(b["departureTime"]!),
+        );
+    }
+    return sorted;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              "${widget.from} → ${widget.to}",
+              style: TextStyle(fontSize: 18),
+            ),
+            Text(
+              "${_sortedBuses.length} buses available",
+              style: TextStyle(fontSize: 12, fontWeight: FontWeight.normal),
+            ),
+          ],
+        ),
+        actions: [
+          PopupMenuButton<String>(
+            icon: Icon(Icons.sort),
+            onSelected: (value) => setState(() => _sortBy = value),
+            itemBuilder: (context) => [
+              PopupMenuItem(
+                value: 'departure',
+                child: Text('Sort by Departure'),
+              ),
+              PopupMenuItem(value: 'price', child: Text('Sort by Price')),
+              PopupMenuItem(value: 'duration', child: Text('Sort by Duration')),
+              PopupMenuItem(value: 'rating', child: Text('Sort by Rating')),
+            ],
+          ),
+        ],
+      ),
+      body: ListView.builder(
+        padding: EdgeInsets.all(16),
+        itemCount: _sortedBuses.length,
+        itemBuilder: (context, index) => _buildBusCard(_sortedBuses[index]),
+      ),
+    );
+  }
+
+ Widget _buildBusCard(Map<String, dynamic> bus) {
+    final amenityIcons = {
+      "wifi": Icons.wifi,
+      "charging": Icons.charging_station,
+      "water": Icons.local_drink,
+      "blanket": Icons.bed,
+    };
+
+    return Card(
+      margin: EdgeInsets.only(bottom: 12),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: () => Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => BookingScreen(
+              tripId: bus["tripId"]!, // Add tripId here
+              busName: bus["name"]!, 
+              price: bus["price"]!,
+              departure: widget.from, // Pass departure
+              arrival: widget.to,     // Pass arrival
+              date: "${widget.date.day}/${widget.date.month}/${widget.date.year}", // Pass date
+            ),
+          ),
+        ),
+        child: Column(
+          children: [
+            // Bus Image
+            Image.network(
+              bus["image"]!,
+              height: 140,
+              width: double.infinity,
+              fit: BoxFit.cover,
+              errorBuilder: (_, __, ___) => Container(
+                height: 140,
+                color: Colors.grey[300],
+                child: Icon(
+                  Icons.directions_bus,
+                  size: 50,
+                  color: Colors.grey[600],
+                ),
+              ),
+            ),
+            Padding(
+              padding: EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              bus["name"]!,
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            SizedBox(height: 4),
+                            Text(
+                              bus["type"]!,
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: Colors.grey[600],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Container(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.green,
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: Row(
+                          children: [
+                            Text(
+                              bus["rating"]!,
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            Icon(Icons.star, color: Colors.white, size: 14),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                  Divider(height: 24),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              bus["departureTime"]!,
+                              style: TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            Text(
+                              widget.from,
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: Colors.grey[600],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Expanded(
+                        child: Column(
+                          children: [
+                            Text(
+                              bus["duration"]!,
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: Colors.grey[600],
+                              ),
+                            ),
+                            SizedBox(height: 4),
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: Divider(color: Colors.grey[400]),
+                                ),
+                                Icon(
+                                  Icons.circle,
+                                  size: 8,
+                                  color: Colors.grey[400],
+                                ),
+                                Expanded(
+                                  child: Divider(color: Colors.grey[400]),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          children: [
+                            Text(
+                              bus["arrivalTime"]!,
+                              style: TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            Text(
+                              widget.to,
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: Colors.grey[600],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                  SizedBox(height: 16),
+                  Wrap(
+                    spacing: 12,
+                    runSpacing: 8,
+                    children: [
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.event_seat,
+                            size: 16,
+                            color: Colors.grey[700],
+                          ),
+                          SizedBox(width: 4),
+                          Text(
+                            "${bus['seats']} seats",
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.grey[700],
+                            ),
+                          ),
+                        ],
+                      ),
+                      ...((bus["amenities"] as List).map(
+                        (a) => Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              amenityIcons[a],
+                              size: 16,
+                              color: Colors.grey[700],
+                            ),
+                            SizedBox(width: 4),
+                            Text(
+                              a.toString().toUpperCase(),
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: Colors.grey[700],
+                              ),
+                            ),
+                          ],
+                        ),
+                      )),
+                    ],
+                  ),
+                  Divider(height: 24),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            bus["price"]!,
+                            style: TextStyle(
+                              fontSize: 24,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.blue,
+                            ),
+                          ),
+                          if (bus["originalPrice"] != null)
+                            Text(
+                              bus["originalPrice"]!,
+                              style: TextStyle(
+                                fontSize: 14,
+                                decoration: TextDecoration.lineThrough,
+                                color: Colors.grey[600],
+                              ),
+                            ),
+                        ],
+                      ),
+                      ElevatedButton(
+                        onPressed: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => BookingScreen(
+                              tripId: bus["tripId"]!, // Add tripId here
+                              busName: bus["name"]!,
+                              price: bus["price"]!,
+                              departure: widget.from, // Pass departure
+                              arrival: widget.to,     // Pass arrival
+                              date: "${widget.date.day}/${widget.date.month}/${widget.date.year}", // Pass date
+                            ),
+                          ),
+                        ),
+                        style: ElevatedButton.styleFrom(
+                          padding: EdgeInsets.symmetric(
+                            horizontal: 24,
+                            vertical: 12,
+                          ),
+                        ),
+                        child: Text("View Seats"),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    Connect buses to routes in your backend (add routeId to buses)
+
+    Update booking to use route data instead of screen parameters
+
+    Add search functionality to find routes

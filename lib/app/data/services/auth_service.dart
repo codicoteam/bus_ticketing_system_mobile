@@ -26,13 +26,75 @@ class AuthService extends GetxService {
     final rememberMe = prefs.getBool(_rememberMeKey) ?? false;
     
     if (rememberMe) {
-      authToken.value = prefs.getString(_tokenKey) ?? '';
-      final userString = prefs.getString(_userKey);
-      if (userString != null) {
-        final userMap = json.decode(userString);
-        userData.value = UserData.fromJson(userMap);
+      final storedToken = prefs.getString(_tokenKey) ?? '';
+      if (storedToken.isNotEmpty) {
+        authToken.value = storedToken;
+        final userString = prefs.getString(_userKey);
+        if (userString != null) {
+          try {
+            final userMap = json.decode(userString);
+            userData.value = UserData.fromJson(userMap);
+            isLoggedIn.value = true;
+          } catch (e) {
+            print('Error loading user data: $e');
+            await clearAuthData();
+          }
+        }
       }
-      isLoggedIn.value = authToken.isNotEmpty;
+    }
+  }
+
+  // Add this method to check if user is properly authenticated
+  bool get isAuthenticated {
+    return isLoggedIn.value && authToken.value.isNotEmpty;
+  }
+
+  // Update getAuthHeaders to handle unauthenticated state
+  Map<String, String> getAuthHeaders() {
+    if (!isAuthenticated) {
+      print('WARNING: No valid authentication token found');
+      return {
+        'Content-Type': 'application/json',
+      };
+    }
+    
+    return {
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer ${authToken.value}',
+    };
+  }
+
+  // Add method to clear auth data
+  Future<void> clearAuthData() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove(_tokenKey);
+    await prefs.remove(_userKey);
+    await prefs.remove(_rememberMeKey);
+    
+    authToken.value = '';
+    userData.value = null;
+    isLoggedIn.value = false;
+  }
+
+  // KEEP ONLY ONE signOut METHOD - Remove the duplicate
+  Future<void> signOut() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove(_tokenKey);
+      await prefs.remove(_userKey);
+      await prefs.remove(_rememberMeKey);
+      
+      authToken.value = '';
+      userData.value = null;
+      isLoggedIn.value = false;
+      
+      print('User logged out successfully');
+    } catch (e) {
+      print('Error during sign out: $e');
+      // Even if there's an error, reset the state
+      authToken.value = '';
+      userData.value = null;
+      isLoggedIn.value = false;
     }
   }
 
@@ -102,29 +164,11 @@ class AuthService extends GetxService {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool(_rememberMeKey, rememberMe);
     
-    if (rememberMe) {
+    if (rememberMe && authToken.value.isNotEmpty) {
       await prefs.setString(_tokenKey, authToken.value);
       if (userData.value != null) {
         await prefs.setString(_userKey, json.encode(userData.value!.toJson()));
       }
     }
-  }
-
-  Future<void> signOut() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.remove(_tokenKey);
-    await prefs.remove(_userKey);
-    await prefs.remove(_rememberMeKey);
-    
-    authToken.value = '';
-    userData.value = null;
-    isLoggedIn.value = false;
-  }
-
-  Map<String, String> getAuthHeaders() {
-    return {
-      'Content-Type': 'application/json',
-      'Authorization': 'Bearer ${authToken.value}',
-    };
   }
 }

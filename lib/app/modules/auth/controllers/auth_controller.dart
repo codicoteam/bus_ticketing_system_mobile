@@ -1,6 +1,6 @@
 import 'package:get/get.dart';
 import '../../../data/models/auth_models.dart';
-import '../../../data/services/auth_service.dart'; // Only one import
+import '../../../data/services/auth_service.dart';
 
 class AuthController extends GetxController {
   final AuthService _authService = Get.find<AuthService>();
@@ -65,7 +65,6 @@ class AuthController extends GetxController {
         errorMessage.value = response.message;
       }
     
-      
       return response;
     } catch (e) {
       errorMessage.value = 'An unexpected error occurred.';
@@ -78,50 +77,79 @@ class AuthController extends GetxController {
     }
   }
 
-  // Add these methods to your AuthController
-Future<AuthResponse> signInWithGoogle() async {
-  try {
-    isLoading.value = true;
-    errorMessage.value = '';
-    
-    // TODO: Implement actual Google Sign-In
-    // For now, return a mock response
-    return AuthResponse(
-      success: false,
-      message: 'Google Sign-In not implemented yet',
-    );
-  } catch (e) {
-    errorMessage.value = 'An unexpected error occurred.';
-    return AuthResponse(
-      success: false,
-      message: 'An unexpected error occurred.',
-    );
-  } finally {
-    isLoading.value = false;
+  Future<AuthResponse> signInWithGoogle() async {
+    try {
+      isLoading.value = true;
+      errorMessage.value = '';
+      
+      // TODO: Implement actual Google Sign-In
+      // For now, return a mock response
+      return AuthResponse(
+        success: false,
+        message: 'Google Sign-In not implemented yet',
+      );
+    } catch (e) {
+      errorMessage.value = 'An unexpected error occurred.';
+      return AuthResponse(
+        success: false,
+        message: 'An unexpected error occurred.',
+      );
+    } finally {
+      isLoading.value = false;
+    }
   }
-}
 
-Future<AuthResponse> signInWithFacebook() async {
-  try {
-    isLoading.value = true;
-    errorMessage.value = '';
-    
-    // TODO: Implement actual Facebook Sign-In
-    // For now, return a mock response
-    return AuthResponse(
-      success: false,
-      message: 'Facebook Sign-In not implemented yet',
-    );
-  } catch (e) {
-    errorMessage.value = 'An unexpected error occurred.';
-    return AuthResponse(
-      success: false,
-      message: 'An unexpected error occurred.',
-    );
-  } finally {
-    isLoading.value = false;
+  Future<AuthResponse> signInWithFacebook() async {
+    try {
+      isLoading.value = true;
+      errorMessage.value = '';
+      
+      // TODO: Implement actual Facebook Sign-In
+      // For now, return a mock response
+      return AuthResponse(
+        success: false,
+        message: 'Facebook Sign-In not implemented yet',
+      );
+    } catch (e) {
+      errorMessage.value = 'An unexpected error occurred.';
+      return AuthResponse(
+        success: false,
+        message: 'An unexpected error occurred.',
+      );
+    } finally {
+      isLoading.value = false;
+    }
   }
-}
+
+  // ADD THIS LOGOUT METHOD
+  Future<void> logout() async {
+    try {
+      isLoading.value = true;
+      errorMessage.value = '';
+      
+      // Call the service to logout
+      await _authService.signOut();
+      
+      // Clear any local state if needed
+      // You can add additional cleanup here
+      
+      // Navigate to login screen after successful logout
+      Get.offAllNamed('/login'); // Or your login route
+      
+    } catch (e) {
+      errorMessage.value = 'Error during logout: $e';
+      // Even if there's an error, we should still try to navigate to login
+      Get.offAllNamed('/login');
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
+  // Alternative simple logout method (if you don't need async operations)
+  void simpleLogout() {
+    _authService.signOut();
+    Get.offAllNamed('/login');
+  }
 
   void signOut() {
     _authService.signOut();

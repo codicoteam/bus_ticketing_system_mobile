@@ -1,10 +1,13 @@
-// ignore_for_file: deprecated_member_use
-
+import '../../../data/models/busroute_models.dart';
+import '../../../widget/app_drawer.dart';
 import '../../notifications/views/notifications_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import '../../booking/views/buses_screen.dart';
-// Import the notifications page
+import 'package:get/get.dart';
+import '../../route/controllers/route_controller.dart';
+import '../../trips/views/trips_screen.dart';
+import '../../profile/views/profile_screen.dart';
+
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -17,14 +20,23 @@ class _HomeScreenState extends State<HomeScreen> {
   final fromCtrl = TextEditingController();
   final toCtrl = TextEditingController();
   DateTime selectedDate = DateTime.now();
-  int unreadNotificationCount = 3; // Example unread count
+  int unreadNotificationCount = 3;
+  final RouteController _routeController = Get.find<RouteController>();
+
+  @override
+  void initState() {
+    super.initState();
+    // Fetch routes when home screen loads
+    _routeController.fetchAllRoutes();
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      drawer: SideDrawer(), // ADD DRAWER HERE
       body: Stack(
         children: [
-          // Background gradient
+          // Background gradient (unchanged)
           Container(
             height: 320,
             decoration: const BoxDecoration(
@@ -39,83 +51,90 @@ class _HomeScreenState extends State<HomeScreen> {
           SafeArea(
             child: Column(
               children: [
-                // App Bar with Notification Button
-                Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 8,
+                // App Bar with Menu, Profile and Notification Buttons
+               // In your HomeScreen, update the menu button section:
+Padding(
+  padding: const EdgeInsets.symmetric(
+    horizontal: 16,
+    vertical: 8,
+  ),
+  child: Row(
+    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+    children: [
+      // Menu Button - FIXED WITH BUILDER
+      Builder(
+        builder: (context) => IconButton(
+          icon: const Icon(
+            Icons.menu,
+            color: Colors.white,
+            size: 28,
+          ),
+          onPressed: () {
+            Scaffold.of(context).openDrawer();
+          },
+        ),
+      ),
+      // Profile Button
+      IconButton(
+        icon: const Icon(
+          Icons.person_outline,
+          color: Colors.white,
+          size: 28,
+        ),
+        onPressed: () {
+          Get.to(() => ProfileScreen());
+        },
+      ),
+      // Notification Button
+      Stack(
+        children: [
+          IconButton(
+            icon: const Icon(
+              Icons.notifications_outlined,
+              color: Colors.white,
+              size: 28,
+            ),
+            onPressed: () {
+              Get.to(() => NotificationsScreen());
+            },
+          ),
+          if (unreadNotificationCount > 0)
+            Positioned(
+              right: 10,
+              top: 8,
+              child: Container(
+                width: 12,
+                height: 12,
+                decoration: BoxDecoration(
+                  color: Colors.red,
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: Colors.white,
+                    width: 1.5,
                   ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      // Empty space for balance (or add menu icon if needed)
-                      const SizedBox(width: 48),
-                      // Center title
-                      const Spacer(),
-                      // Notification button
-                      Stack(
-                        children: [
-                          IconButton(
-                            icon: const Icon(
-                              Icons.notifications_outlined,
-                              color: Colors.white,
-                              size: 28,
-                            ),
-                            onPressed: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) =>
-                                      const NotificationsPage(),
-                                ),
-                              );
-                            },
-                          ),
-                          // Notification badge
-                          if (unreadNotificationCount > 0)
-                            Positioned(
-                              right: 8,
-                              top: 8,
-                              child: Container(
-                                padding: const EdgeInsets.all(4),
-                                decoration: BoxDecoration(
-                                  color: Colors.red,
-                                  borderRadius: BorderRadius.circular(10),
-                                  border: Border.all(
-                                    color: Colors.white,
-                                    width: 1.5,
-                                  ),
-                                ),
-                                constraints: const BoxConstraints(
-                                  minWidth: 18,
-                                  minHeight: 18,
-                                ),
-                                child: Text(
-                                  unreadNotificationCount > 9
-                                      ? '9+'
-                                      : '$unreadNotificationCount',
-                                  style: const TextStyle(
-                                    fontSize: 10,
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                  textAlign: TextAlign.center,
-                                ),
-                              ),
-                            ),
-                        ],
-                      ),
-                    ],
-                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.red.withOpacity(0.5),
+                      blurRadius: 4,
+                      spreadRadius: 1,
+                    ),
+                  ],
                 ),
+              ),
+            ),
+        ],
+      ),
+    ],
+  ),
+),
 
-                // Scrollable content
+                // Rest of your existing content remains exactly the same...
                 Expanded(
                   child: SingleChildScrollView(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // Header
+                        // Header (unchanged)
                         Padding(
                           padding: const EdgeInsets.fromLTRB(24, 8, 24, 24),
                           child: Column(
@@ -142,7 +161,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           ),
                         ),
 
-                        // Search Card
+                        // Search Card (unchanged)
                         Container(
                           margin: const EdgeInsets.all(20),
                           padding: const EdgeInsets.all(24),
@@ -180,6 +199,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           ),
                         ),
 
+                        // ... rest of your existing HomeScreen content
                         // Stats Row
                         Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -196,7 +216,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
                         const SizedBox(height: 32),
 
-                        // Popular Routes
+                        // Popular Routes with REAL DATA
                         Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 20),
                           child: Row(
@@ -219,28 +239,35 @@ class _HomeScreenState extends State<HomeScreen> {
 
                         const SizedBox(height: 16),
 
-                        SizedBox(
-                          height: 160,
-                          child: ListView(
-                            padding: const EdgeInsets.symmetric(horizontal: 20),
-                            scrollDirection: Axis.horizontal,
-                            children: [
-                              _buildRouteCard(
-                                'New York',
-                                'Boston',
-                                '\$45',
-                                '4h 30m',
+                        // Popular Routes List with REAL DATA
+                        Obx(() {
+                          if (_routeController.isLoading.value) {
+                            return SizedBox(
+                              height: 160,
+                              child: Center(child: CircularProgressIndicator()),
+                            );
+                          }
+
+                          if (_routeController.routes.isEmpty) {
+                            return SizedBox(
+                              height: 160,
+                              child: Center(child: Text('No routes available')),
+                            );
+                          }
+
+                          return SizedBox(
+                            height: 160,
+                            child: ListView(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 20,
                               ),
-                              _buildRouteCard('LA', 'San Diego', '\$35', '3h'),
-                              _buildRouteCard(
-                                'Chicago',
-                                'Detroit',
-                                '\$50',
-                                '5h',
-                              ),
-                            ],
-                          ),
-                        ),
+                              scrollDirection: Axis.horizontal,
+                              children: _routeController.popularRoutes
+                                  .map((route) => _buildRouteCard(route))
+                                  .toList(),
+                            ),
+                          );
+                        }),
 
                         const SizedBox(height: 32),
 
@@ -288,6 +315,149 @@ class _HomeScreenState extends State<HomeScreen> {
         ],
       ),
     );
+  }
+
+  // ALL YOUR EXISTING METHODS REMAIN EXACTLY THE SAME...
+  Widget _buildSearchButton(BuildContext context) {
+    return SizedBox(
+      width: double.infinity,
+      height: 56,
+      child: ElevatedButton(
+        onPressed: () {
+          if (fromCtrl.text.isEmpty || toCtrl.text.isEmpty) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: const Text('Please enter both locations'),
+                backgroundColor: Colors.red.shade400,
+                behavior: SnackBarBehavior.floating,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+            );
+            return;
+          }
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => TripsScreen(
+                from: fromCtrl.text,
+                to: toCtrl.text,
+                date: selectedDate,
+              ),
+            ),
+          );
+        },
+        style: ElevatedButton.styleFrom(
+          backgroundColor: const Color(0xFF2196F3),
+          foregroundColor: Colors.white,
+          elevation: 0,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+        ),
+        child: const Text(
+          'Search Buses',
+          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildRouteCard(BusRoute route) {
+    final price = '\$${route.baseFare}';
+    final duration = _formatApiDuration(route.duration);
+
+    return Container(
+      width: 200,
+      margin: const EdgeInsets.only(right: 16),
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [Color(0xFF42A5F5), Color(0xFF1E88E5)],
+        ),
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF2196F3).withOpacity(0.3),
+            blurRadius: 15,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                route.origin,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  Container(width: 30, height: 2, color: Colors.white70),
+                  const SizedBox(width: 4),
+                  const Icon(
+                    Icons.arrow_forward,
+                    color: Colors.white70,
+                    size: 16,
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Text(
+                route.destination,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
+          ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                price,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.2),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  duration,
+                  style: const TextStyle(color: Colors.white, fontSize: 12),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _formatApiDuration(int minutes) {
+    final hours = minutes ~/ 60;
+    final remainingMinutes = minutes % 60;
+    return '${hours}h ${remainingMinutes}m';
   }
 
   Widget _buildLocationField(
@@ -405,52 +575,6 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildSearchButton(BuildContext context) {
-    return SizedBox(
-      width: double.infinity,
-      height: 56,
-      child: ElevatedButton(
-        onPressed: () {
-          if (fromCtrl.text.isEmpty || toCtrl.text.isEmpty) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: const Text('Please enter both locations'),
-                backgroundColor: Colors.red.shade400,
-                behavior: SnackBarBehavior.floating,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
-                ),
-              ),
-            );
-            return;
-          }
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (_) => BusesScreen(
-                from: fromCtrl.text,
-                to: toCtrl.text,
-                date: selectedDate,
-              ),
-            ),
-          );
-        },
-        style: ElevatedButton.styleFrom(
-          backgroundColor: const Color(0xFF2196F3),
-          foregroundColor: Colors.white,
-          elevation: 0,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
-        ),
-        child: const Text(
-          'Search Buses',
-          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-        ),
-      ),
-    );
-  }
-
   Widget _buildStat(String value, String label) {
     return Expanded(
       child: Container(
@@ -480,98 +604,6 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           ],
         ),
-      ),
-    );
-  }
-
-  Widget _buildRouteCard(
-    String from,
-    String to,
-    String price,
-    String duration,
-  ) {
-    return Container(
-      width: 200,
-      margin: const EdgeInsets.only(right: 16),
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [Color(0xFF42A5F5), Color(0xFF1E88E5)],
-        ),
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xFF2196F3).withOpacity(0.3),
-            blurRadius: 15,
-            offset: const Offset(0, 8),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                from,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 8),
-              Row(
-                children: [
-                  Container(width: 30, height: 2, color: Colors.white70),
-                  const SizedBox(width: 4),
-                  const Icon(
-                    Icons.arrow_forward,
-                    color: Colors.white70,
-                    size: 16,
-                  ),
-                ],
-              ),
-              const SizedBox(height: 8),
-              Text(
-                to,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ],
-          ),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                price,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.2),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Text(
-                  duration,
-                  style: const TextStyle(color: Colors.white, fontSize: 12),
-                ),
-              ),
-            ],
-          ),
-        ],
       ),
     );
   }

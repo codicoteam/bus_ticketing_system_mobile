@@ -2,8 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:busticket/app/modules/booking/controllers/booking_controller.dart';
-import 'package:busticket/app/modules/ticket/views/ticket_screen.dart';
 import '../../../data/models/booking_models.dart';
+import '../../../data/services/auth_service.dart';
+import '../../payments/views/payment_screen.dart';
 
 class BookingScreen extends StatefulWidget {
   final String tripId;
@@ -30,6 +31,7 @@ class BookingScreen extends StatefulWidget {
 class _BookingScreenState extends State<BookingScreen> {
   final _formKey = GlobalKey<FormState>();
   final BookingController _bookingController = Get.find<BookingController>();
+  final AuthService _authService = Get.find<AuthService>();
 
   final nameCtrl = TextEditingController();
   final emailCtrl = TextEditingController();
@@ -136,6 +138,22 @@ class _BookingScreenState extends State<BookingScreen> {
   }
 
   Future<void> _processBooking() async {
+    // Check if user is logged in
+    if (!_authService.isLoggedIn.value) {
+      Get.snackbar(
+        'Login Required',
+        'Please login to book tickets',
+        backgroundColor: Colors.orange,
+        colorText: Colors.white,
+      );
+      
+      // Optional: Redirect to login page
+      Future.delayed(const Duration(seconds: 2), () {
+        Get.toNamed('/login');
+      });
+      return;
+    }
+
     if (!_formKey.currentState!.validate()) {
       return;
     }
@@ -160,7 +178,6 @@ class _BookingScreenState extends State<BookingScreen> {
       ),
     ];
 
-    // Create booking data according to your API
     final bookingResponse = await _bookingController.createBooking(
       tripId: widget.tripId,
       seats: seats,
@@ -171,16 +188,14 @@ class _BookingScreenState extends State<BookingScreen> {
     );
 
     if (bookingResponse.success && bookingResponse.booking != null) {
-      Get.offAll(
-        () => TicketPage(
-          name: nameCtrl.text,
-          bus: widget.busName,
-          price: _calculateTotal().toStringAsFixed(2),
-          seats: seatsCtrl.text,
+      Get.to(
+        () => PaymentScreen(
           bookingId: bookingResponse.booking!.id,
-          departure: widget.departure, // Pass departure
-          arrival: widget.arrival, // Pass arrival
-          date: widget.date, // Pass date
+          amount: _calculateTotal(),
+          busName: widget.busName,
+          departure: widget.departure,
+          arrival: widget.arrival,
+          date: widget.date,
         ),
       );
     } else {
@@ -190,6 +205,15 @@ class _BookingScreenState extends State<BookingScreen> {
         backgroundColor: Colors.red,
         colorText: Colors.white,
       );
+      
+      // If it's an auth error, redirect to login
+      if (bookingResponse.message.contains('login') || 
+          bookingResponse.message.contains('Session expired') ||
+          bookingResponse.message.contains('Please login')) {
+        Future.delayed(const Duration(seconds: 2), () {
+          Get.toNamed('/login');
+        });
+      }
     }
   }
 
@@ -273,7 +297,7 @@ class _BookingScreenState extends State<BookingScreen> {
                           const SizedBox(height: 16),
                           // Gender Dropdown
                           DropdownButtonFormField<String>(
-                            value: _selectedGender,
+                            initialValue: _selectedGender,
                             decoration: _inputDecoration(
                               "Gender",
                               "Select Gender",
@@ -296,7 +320,7 @@ class _BookingScreenState extends State<BookingScreen> {
                           const SizedBox(height: 16),
                           // ID Type Dropdown
                           DropdownButtonFormField<String>(
-                            value: _selectedIdType,
+                            initialValue: _selectedIdType,
                             decoration: _inputDecoration(
                               "ID Type",
                               "Select ID Type",

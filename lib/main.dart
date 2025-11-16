@@ -5,8 +5,11 @@ import 'app/bindings/app_bindings.dart';
 import 'app/modules/home/views/home_screen.dart';
 import 'app/modules/auth/views/signup_screen.dart';
 import 'app/modules/auth/views/login_screen.dart';
+import 'app/modules/notifications/views/notifications_screen.dart';
+import 'app/modules/trips/views/trips_screen.dart';
 import 'app/modules/welcome_screens/views/onboarding_screen2.dart';
 import 'app/modules/welcome_screens/views/splash_screen1.dart';
+
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -35,16 +38,26 @@ class BusTicketApp extends StatelessWidget {
       //home: onboardingCompleted ? const SignUpScreen() : const SplashScreen(),
       
       // Option 2: Direct to HomePage (skip everything)
-      home: const HomeScreen(),
+      // home: const HomeScreen(),
       
       // Option 3: Direct to SignUpScreen 
       // home: const SignUpScreen(),
       
       // Option 4: Direct to LoginScreen
-      // home: const LoginScreen(),
+       home: const LoginScreen(),
       
       // Option 5: Start from SplashScreen (full flow)
       // home: const SplashScreen(),
+
+      // Option 6: Direct to PaymentScreen for testing
+     /*home: const PaymentScreen(
+        bookingId: "TEST123",
+        amount: 50.00,
+        busName: "Test Bus",
+        departure: "Harare",
+        arrival: "Bulawayo", 
+        date: "2024-01-15",
+      ),*/
 
       getPages: [
         GetPage(name: '/splashscreen', page: () => const SplashScreen()),
@@ -52,6 +65,8 @@ class BusTicketApp extends StatelessWidget {
         GetPage(name: '/signup', page: () => const SignUpScreen()),
         GetPage(name: '/login', page: () => const LoginScreen()),
         GetPage(name: '/home', page: () => const HomeScreen()),
+        GetPage(name: '/trips', page: () => TripsScreen(from: '', to: '', date: DateTime.now())),
+        GetPage(name: '/notifications', page: () => NotificationsScreen()),
       ],
     );
   }
