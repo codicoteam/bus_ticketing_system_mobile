@@ -46,61 +46,82 @@ class TripService extends GetxService {
     }
   }
 
-  Future<TripResponse> getTripsByRoute(String origin, String destination) async {
-    try {
-      final response = await http.get(
-        Uri.parse('$baseUrl/trips'),
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      );
+Future<TripResponse> getTripsByRoute(String origin, String destination) async {
+  try {
+    final response = await http.get(
+      Uri.parse('$baseUrl/trips'),
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    );
 
-      print('Trips Search Response: ${response.statusCode}');
+    print('Trips Search Response: ${response.statusCode}');
+    print('Searching for: $origin → $destination');
 
-      if (response.statusCode == 200) {
-        final responseData = json.decode(response.body);
-        List<Trip> allTrips = [];
+    if (response.statusCode == 200) {
+      final responseData = json.decode(response.body);
+      List<Trip> allTrips = [];
 
-        // Parse the response - your API returns a List directly
-        if (responseData is List) {
-          try {
-            allTrips = responseData.map((tripJson) => Trip.fromJson(tripJson)).toList();
-          } catch (e) {
-            print('Trip parsing error in search: $e');
-            return TripResponse.error('Error parsing trip data: $e');
-          }
-        } else {
-          return TripResponse.error('Invalid response format');
+      // Parse the response
+      if (responseData is List) {
+        try {
+          allTrips = responseData.map((tripJson) => Trip.fromJson(tripJson)).toList();
+          print('Total trips parsed: ${allTrips.length}');
+        } catch (e) {
+          print('Trip parsing error in search: $e');
+          return TripResponse.error('Error parsing trip data: $e');
         }
-
-        // Filter trips by origin and destination
-        final filteredTrips = allTrips.where((trip) {
-          if (trip.route == null) return false;
-          
-          final tripOrigin = trip.route!.origin.toLowerCase();
-          final tripDestination = trip.route!.destination.toLowerCase();
-          final searchOrigin = origin.toLowerCase();
-          final searchDestination = destination.toLowerCase();
-          
-          return tripOrigin.contains(searchOrigin) && 
-                 tripDestination.contains(searchDestination);
-        }).toList();
-
-        return TripResponse(
-          success: true,
-          message: filteredTrips.isEmpty 
-              ? 'No trips found for $origin to $destination' 
-              : '${filteredTrips.length} trips found',
-          trips: filteredTrips,
-        );
       } else {
-        return TripResponse.error('Failed to search trips: ${response.statusCode}');
+        return TripResponse.error('Invalid response format');
       }
-    } catch (e) {
-      print('Trips Search Error: $e');
-      return TripResponse.error('Search error: $e');
+
+      // DEBUG: Print all trip routes
+      for (var trip in allTrips) {
+        if (trip.route != null) {
+          print('Trip Route: ${trip.route!.origin} → ${trip.route!.destination}');
+        } else {
+          print('Trip has no route data');
+        }
+      }
+
+      // Filter trips by origin and destination (EXACT MATCH)
+      final filteredTrips = allTrips.where((trip) {
+        if (trip.route == null) {
+          print('Skipping trip - no route data');
+          return false;
+        }
+        
+        final tripOrigin = trip.route!.origin.toLowerCase().trim();
+        final tripDestination = trip.route!.destination.toLowerCase().trim();
+        final searchOrigin = origin.toLowerCase().trim();
+        final searchDestination = destination.toLowerCase().trim();
+        
+        final matches = tripOrigin == searchOrigin && tripDestination == searchDestination;
+        
+        if (matches) {
+          print('MATCH FOUND: $tripOrigin → $tripDestination');
+        }
+        
+        return matches;
+      }).toList();
+
+      print('Filtered trips count: ${filteredTrips.length}');
+
+      return TripResponse(
+        success: true,
+        message: filteredTrips.isEmpty 
+            ? 'No trips found for $origin to $destination' 
+            : '${filteredTrips.length} trips found for $origin to $destination',
+        trips: filteredTrips,
+      );
+    } else {
+      return TripResponse.error('Failed to search trips: ${response.statusCode}');
     }
+  } catch (e) {
+    print('Trips Search Error: $e');
+    return TripResponse.error('Search error: $e');
   }
+}
 
   // Optional: Add method to get trips by date
   Future<TripResponse> getTripsByDate(DateTime date) async {

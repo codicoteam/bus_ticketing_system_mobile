@@ -28,7 +28,7 @@ class BookingScreen extends StatefulWidget {
   State<BookingScreen> createState() => _BookingScreenState();
 }
 
-class _BookingScreenState extends State<BookingScreen> {
+class _BookingScreenState extends State<BookingScreen> with SingleTickerProviderStateMixin {
   final _formKey = GlobalKey<FormState>();
   final BookingController _bookingController = Get.find<BookingController>();
   final AuthService _authService = Get.find<AuthService>();
@@ -42,20 +42,43 @@ class _BookingScreenState extends State<BookingScreen> {
   final boardingPointCtrl = TextEditingController();
   final droppingPointCtrl = TextEditingController();
 
-  String _selectedPaymentMethod = 'card';
   String _selectedGender = 'Male';
   String _selectedIdType = 'National ID';
+  
+  late AnimationController _animationController;
+  late Animation<double> _fadeAnimation;
+  late Animation<Offset> _slideAnimation;
 
   @override
   void initState() {
     super.initState();
-    // Set default values
     boardingPointCtrl.text = widget.departure ?? 'Main Station';
     droppingPointCtrl.text = widget.arrival ?? 'Destination Station';
+    
+    _animationController = AnimationController(
+      duration: const Duration(milliseconds: 800),
+      vsync: this,
+    );
+    
+    _fadeAnimation = CurvedAnimation(
+      parent: _animationController,
+      curve: Curves.easeInOut,
+    );
+    
+    _slideAnimation = Tween<Offset>(
+      begin: const Offset(0, 0.1),
+      end: Offset.zero,
+    ).animate(CurvedAnimation(
+      parent: _animationController,
+      curve: Curves.easeOut,
+    ));
+    
+    _animationController.forward();
   }
 
   @override
   void dispose() {
+    _animationController.dispose();
     nameCtrl.dispose();
     emailCtrl.dispose();
     phoneCtrl.dispose();
@@ -131,23 +154,24 @@ class _BookingScreenState extends State<BookingScreen> {
   }
 
   double _calculateTotal() {
-    final pricePerSeat =
-        double.tryParse(widget.price.replaceAll('\$', '')) ?? 0;
+    final pricePerSeat = double.tryParse(widget.price.replaceAll('\$', '')) ?? 0;
     final seats = int.tryParse(seatsCtrl.text) ?? 1;
     return pricePerSeat * seats;
   }
 
   Future<void> _processBooking() async {
-    // Check if user is logged in
     if (!_authService.isLoggedIn.value) {
       Get.snackbar(
         'Login Required',
         'Please login to book tickets',
-        backgroundColor: Colors.orange,
+        backgroundColor: const Color(0xFFFF9800),
         colorText: Colors.white,
+        icon: const Icon(Icons.login_rounded, color: Colors.white),
+        snackPosition: SnackPosition.TOP,
+        margin: const EdgeInsets.all(16),
+        borderRadius: 12,
       );
       
-      // Optional: Redirect to login page
       Future.delayed(const Duration(seconds: 2), () {
         Get.toNamed('/login');
       });
@@ -155,10 +179,19 @@ class _BookingScreenState extends State<BookingScreen> {
     }
 
     if (!_formKey.currentState!.validate()) {
+      Get.snackbar(
+        'Incomplete Form',
+        'Please fill in all required fields correctly',
+        backgroundColor: const Color(0xFFE53935),
+        colorText: Colors.white,
+        icon: const Icon(Icons.error_outline_rounded, color: Colors.white),
+        snackPosition: SnackPosition.TOP,
+        margin: const EdgeInsets.all(16),
+        borderRadius: 12,
+      );
       return;
     }
 
-    // Create proper Seat and PassengerDetail objects
     final seats = [
       Seat(
         number: "A${seatsCtrl.text}",
@@ -172,9 +205,7 @@ class _BookingScreenState extends State<BookingScreen> {
         age: int.parse(ageCtrl.text),
         gender: _selectedGender,
         idType: _selectedIdType,
-        idNumber: idNumberCtrl.text.isEmpty
-            ? 'NOT_PROVIDED'
-            : idNumberCtrl.text,
+        idNumber: idNumberCtrl.text.isEmpty ? 'NOT_PROVIDED' : idNumberCtrl.text,
       ),
     ];
 
@@ -202,11 +233,14 @@ class _BookingScreenState extends State<BookingScreen> {
       Get.snackbar(
         'Booking Failed',
         bookingResponse.message,
-        backgroundColor: Colors.red,
+        backgroundColor: const Color(0xFFE53935),
         colorText: Colors.white,
+        icon: const Icon(Icons.error_outline_rounded, color: Colors.white),
+        snackPosition: SnackPosition.TOP,
+        margin: const EdgeInsets.all(16),
+        borderRadius: 12,
       );
       
-      // If it's an auth error, redirect to login
       if (bookingResponse.message.contains('login') || 
           bookingResponse.message.contains('Session expired') ||
           bookingResponse.message.contains('Please login')) {
@@ -223,9 +257,27 @@ class _BookingScreenState extends State<BookingScreen> {
       backgroundColor: Colors.grey[50],
       appBar: AppBar(
         elevation: 0,
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black87,
-        title: const Text("Complete Booking"),
+        backgroundColor: const Color(0xFF2196F3),
+        leading: Container(
+          margin: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: Colors.white.withOpacity(0.2),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: IconButton(
+            icon: const Icon(Icons.arrow_back_ios_new, size: 20),
+            color: Colors.white,
+            onPressed: () => Navigator.pop(context),
+          ),
+        ),
+        title: const Text(
+          "Complete Booking",
+          style: TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+            fontSize: 18,
+          ),
+        ),
         centerTitle: true,
       ),
       body: Form(
@@ -234,370 +286,159 @@ class _BookingScreenState extends State<BookingScreen> {
           children: [
             Expanded(
               child: SingleChildScrollView(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Trip Summary Card
-                    _buildTripSummaryCard(),
-                    const SizedBox(height: 20),
+                physics: const BouncingScrollPhysics(),
+                padding: const EdgeInsets.all(20),
+                child: FadeTransition(
+                  opacity: _fadeAnimation,
+                  child: SlideTransition(
+                    position: _slideAnimation,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Enhanced Trip Summary Card
+                        _buildTripSummaryCard(),
+                        const SizedBox(height: 28),
 
-                    // Passenger Details
-                    _buildSectionHeader("Passenger Details", Icons.person),
-                    const SizedBox(height: 12),
-                    _buildCard(
-                      child: Column(
-                        children: [
-                          TextFormField(
-                            controller: nameCtrl,
-                            validator: _validateName,
-                            textCapitalization: TextCapitalization.words,
-                            decoration: _inputDecoration(
-                              "Full Name",
-                              "John Doe",
-                              Icons.person_outline,
-                            ),
-                          ),
-                          const SizedBox(height: 16),
-                          TextFormField(
-                            controller: emailCtrl,
-                            validator: _validateEmail,
-                            keyboardType: TextInputType.emailAddress,
-                            decoration: _inputDecoration(
-                              "Email Address",
-                              "john.doe@example.com",
-                              Icons.email_outlined,
-                            ),
-                          ),
-                          const SizedBox(height: 16),
-                          TextFormField(
-                            controller: phoneCtrl,
-                            validator: _validatePhone,
-                            keyboardType: TextInputType.phone,
-                            decoration: _inputDecoration(
-                              "Phone Number",
-                              "+1 (555) 123-4567",
-                              Icons.phone_outlined,
-                            ),
-                          ),
-                          const SizedBox(height: 16),
-                          TextFormField(
-                            controller: ageCtrl,
-                            validator: _validateAge,
-                            keyboardType: TextInputType.number,
-                            inputFormatters: [
-                              FilteringTextInputFormatter.digitsOnly,
-                            ],
-                            decoration: _inputDecoration(
-                              "Age",
-                              "25",
-                              Icons.cake_outlined,
-                            ),
-                          ),
-                          const SizedBox(height: 16),
-                          // Gender Dropdown
-                          DropdownButtonFormField<String>(
-                            initialValue: _selectedGender,
-                            decoration: _inputDecoration(
-                              "Gender",
-                              "Select Gender",
-                              Icons.person_outline,
-                            ),
-                            items: ['Male', 'Female', 'Other']
-                                .map(
-                                  (gender) => DropdownMenuItem(
-                                    value: gender,
-                                    child: Text(gender),
-                                  ),
-                                )
-                                .toList(),
-                            onChanged: (value) {
-                              setState(() {
-                                _selectedGender = value!;
-                              });
-                            },
-                          ),
-                          const SizedBox(height: 16),
-                          // ID Type Dropdown
-                          DropdownButtonFormField<String>(
-                            initialValue: _selectedIdType,
-                            decoration: _inputDecoration(
-                              "ID Type",
-                              "Select ID Type",
-                              Icons.badge_outlined,
-                            ),
-                            items:
-                                ['National ID', 'Passport', 'Driving License']
-                                    .map(
-                                      (idType) => DropdownMenuItem(
-                                        value: idType,
-                                        child: Text(idType),
-                                      ),
-                                    )
-                                    .toList(),
-                            onChanged: (value) {
-                              setState(() {
-                                _selectedIdType = value!;
-                              });
-                            },
-                          ),
-                          const SizedBox(height: 16),
-                          TextFormField(
-                            controller: idNumberCtrl,
-                            decoration: _inputDecoration(
-                              "ID Number (Optional)",
-                              "ID123456",
-                              Icons.numbers_outlined,
-                            ),
-                          ),
-                          const SizedBox(height: 16),
-                          TextFormField(
-                            controller: seatsCtrl,
-                            validator: _validateSeats,
-                            keyboardType: TextInputType.number,
-                            inputFormatters: [
-                              FilteringTextInputFormatter.digitsOnly,
-                            ],
-                            decoration: _inputDecoration(
-                              "Number of Seats",
-                              "1",
-                              Icons.event_seat_outlined,
-                            ),
-                            onChanged: (_) => setState(() {}),
-                          ),
-                          const SizedBox(height: 16),
-                          TextFormField(
-                            controller: boardingPointCtrl,
-                            validator: _validateRequired,
-                            decoration: _inputDecoration(
-                              "Boarding Point",
-                              "Main Station",
-                              Icons.location_on_outlined,
-                            ),
-                          ),
-                          const SizedBox(height: 16),
-                          TextFormField(
-                            controller: droppingPointCtrl,
-                            validator: _validateRequired,
-                            decoration: _inputDecoration(
-                              "Dropping Point",
-                              "Destination Station",
-                              Icons.location_on_outlined,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 24),
-
-                    // Payment Method Selection
-                    _buildSectionHeader("Payment Method", Icons.payment),
-                    const SizedBox(height: 12),
-                    _buildCard(
-                      child: Column(
-                        children: [
-                          _buildPaymentOption(
-                            'card',
-                            'Credit/Debit Card',
-                            Icons.credit_card,
-                          ),
-                          const Divider(height: 1),
-                          _buildPaymentOption(
-                            'mobile',
-                            'Mobile Money',
-                            Icons.phone_android,
-                          ),
-                          const Divider(height: 1),
-                          _buildPaymentOption(
-                            'cash',
-                            'Pay at Counter',
-                            Icons.money,
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 24),
-
-                    // Payment Details (conditional)
-                    if (_selectedPaymentMethod == 'card') ...[
-                      _buildSectionHeader("Card Details", Icons.credit_card),
-                      const SizedBox(height: 12),
-                      _buildCard(
-                        child: Column(
-                          children: [
-                            TextFormField(
-                              decoration: _inputDecoration(
-                                "Name on Card",
-                                "John Doe",
-                                Icons.person_outline,
+                        // Enhanced Section Header
+                        _buildSectionHeader("Passenger Details", Icons.person_rounded),
+                        const SizedBox(height: 16),
+                        
+                        // Passenger Details Card
+                        _buildCard(
+                          child: Column(
+                            children: [
+                              _buildTextField(
+                                controller: nameCtrl,
+                                validator: _validateName,
+                                label: "Full Name",
+                                hint: "John Doe",
+                                icon: Icons.person_outline_rounded,
+                                textCapitalization: TextCapitalization.words,
                               ),
-                            ),
-                            const SizedBox(height: 16),
-                            TextFormField(
-                              keyboardType: TextInputType.number,
-                              inputFormatters: [
-                                FilteringTextInputFormatter.digitsOnly,
-                                _CardNumberFormatter(),
-                              ],
-                              decoration: _inputDecoration(
-                                "Card Number",
-                                "1234 5678 9012 3456",
-                                Icons.credit_card,
+                              const SizedBox(height: 18),
+                              _buildTextField(
+                                controller: emailCtrl,
+                                validator: _validateEmail,
+                                label: "Email Address",
+                                hint: "john.doe@example.com",
+                                icon: Icons.email_outlined,
+                                keyboardType: TextInputType.emailAddress,
                               ),
-                            ),
-                            const SizedBox(height: 16),
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: TextFormField(
-                                    keyboardType: TextInputType.number,
-                                    inputFormatters: [
-                                      FilteringTextInputFormatter.digitsOnly,
-                                      _ExpiryDateFormatter(),
-                                    ],
-                                    decoration: _inputDecoration(
-                                      "Expiry Date",
-                                      "MM/YY",
-                                      Icons.calendar_today,
-                                    ),
-                                  ),
-                                ),
-                                const SizedBox(width: 16),
-                                Expanded(
-                                  child: TextFormField(
-                                    keyboardType: TextInputType.number,
-                                    obscureText: true,
-                                    inputFormatters: [
-                                      FilteringTextInputFormatter.digitsOnly,
-                                      LengthLimitingTextInputFormatter(4),
-                                    ],
-                                    decoration: _inputDecoration(
-                                      "CVV",
-                                      "123",
-                                      Icons.lock_outline,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-                    ] else if (_selectedPaymentMethod == 'mobile') ...[
-                      _buildSectionHeader(
-                        "Mobile Money Details",
-                        Icons.phone_android,
-                      ),
-                      const SizedBox(height: 12),
-                      _buildCard(
-                        child: Column(
-                          children: [
-                            TextFormField(
-                              keyboardType: TextInputType.phone,
-                              decoration: _inputDecoration(
-                                "Mobile Money Number",
-                                "+1 (555) 123-4567",
-                                Icons.phone_outlined,
+                              const SizedBox(height: 18),
+                              _buildTextField(
+                                controller: phoneCtrl,
+                                validator: _validatePhone,
+                                label: "Phone Number",
+                                hint: "+1 (555) 123-4567",
+                                icon: Icons.phone_outlined,
+                                keyboardType: TextInputType.phone,
                               ),
-                            ),
-                            const SizedBox(height: 12),
-                            Container(
-                              padding: const EdgeInsets.all(12),
-                              decoration: BoxDecoration(
-                                color: Colors.blue[50],
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: Row(
+                              const SizedBox(height: 18),
+                              Row(
                                 children: [
-                                  Icon(
-                                    Icons.info_outline,
-                                    size: 20,
-                                    color: Colors.blue[700],
-                                  ),
-                                  const SizedBox(width: 8),
                                   Expanded(
-                                    child: Text(
-                                      "You'll receive a payment prompt on your phone",
-                                      style: TextStyle(
-                                        fontSize: 12,
-                                        color: Colors.blue[700],
-                                      ),
+                                    child: _buildTextField(
+                                      controller: ageCtrl,
+                                      validator: _validateAge,
+                                      label: "Age",
+                                      hint: "25",
+                                      icon: Icons.cake_outlined,
+                                      keyboardType: TextInputType.number,
+                                      inputFormatters: [
+                                        FilteringTextInputFormatter.digitsOnly,
+                                      ],
+                                    ),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: _buildDropdown(
+                                      value: _selectedGender,
+                                      label: "Gender",
+                                      icon: Icons.wc_rounded,
+                                      items: ['Male', 'Female', 'Other'],
+                                      onChanged: (value) {
+                                        setState(() => _selectedGender = value!);
+                                      },
                                     ),
                                   ),
                                 ],
                               ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-                    ] else if (_selectedPaymentMethod == 'cash') ...[
-                      const SizedBox(height: 12),
-                      _buildCard(
-                        child: Container(
-                          padding: const EdgeInsets.all(16),
-                          child: Column(
-                            children: [
-                              Icon(
-                                Icons.info_outline,
-                                size: 48,
-                                color: Colors.orange[700],
+                              const SizedBox(height: 18),
+                              _buildDropdown(
+                                value: _selectedIdType,
+                                label: "ID Type",
+                                icon: Icons.badge_outlined,
+                                items: ['National ID', 'Passport', 'Driving License'],
+                                onChanged: (value) {
+                                  setState(() => _selectedIdType = value!);
+                                },
                               ),
-                              const SizedBox(height: 12),
-                              Text(
-                                "Pay at Counter",
-                                style: TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.grey[800],
-                                ),
-                              ),
-                              const SizedBox(height: 8),
-                              Text(
-                                "Please pay at the bus terminal counter at least 30 minutes before departure",
-                                textAlign: TextAlign.center,
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  color: Colors.grey[600],
-                                ),
+                              const SizedBox(height: 18),
+                              _buildTextField(
+                                controller: idNumberCtrl,
+                                label: "ID Number (Optional)",
+                                hint: "ID123456",
+                                icon: Icons.numbers_outlined,
                               ),
                             ],
                           ),
                         ),
-                      ),
-                      const SizedBox(height: 16),
-                    ],
+                        
+                        const SizedBox(height: 28),
 
-                    // Terms and Conditions
-                    _buildCard(
-                      child: Row(
-                        children: [
-                          Icon(
-                            Icons.verified_user,
-                            size: 20,
-                            color: Colors.green[600],
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Text(
-                              "Your payment is secured with 256-bit encryption",
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: Colors.grey[600],
+                        // Booking Details Section
+                        _buildSectionHeader("Booking Details", Icons.confirmation_number_rounded),
+                        const SizedBox(height: 16),
+                        
+                        _buildCard(
+                          child: Column(
+                            children: [
+                              _buildTextField(
+                                controller: seatsCtrl,
+                                validator: _validateSeats,
+                                label: "Number of Seats",
+                                hint: "1",
+                                icon: Icons.event_seat_outlined,
+                                keyboardType: TextInputType.number,
+                                inputFormatters: [
+                                  FilteringTextInputFormatter.digitsOnly,
+                                ],
+                                onChanged: (_) => setState(() {}),
                               ),
-                            ),
+                              const SizedBox(height: 18),
+                              _buildTextField(
+                                controller: boardingPointCtrl,
+                                validator: _validateRequired,
+                                label: "Boarding Point",
+                                hint: "Main Station",
+                                icon: Icons.trip_origin_rounded,
+                              ),
+                              const SizedBox(height: 18),
+                              _buildTextField(
+                                controller: droppingPointCtrl,
+                                validator: _validateRequired,
+                                label: "Dropping Point",
+                                hint: "Destination Station",
+                                icon: Icons.location_on_outlined,
+                              ),
+                            ],
                           ),
-                        ],
-                      ),
+                        ),
+                        
+                        const SizedBox(height: 24),
+
+                        // Security Badge
+                        _buildSecurityBadge(),
+                        
+                        const SizedBox(height: 120),
+                      ],
                     ),
-                    const SizedBox(height: 100),
-                  ],
+                  ),
                 ),
               ),
             ),
 
-            // Bottom Payment Summary
+            // Enhanced Bottom Bar
             Obx(() => _buildBottomBar()),
           ],
         ),
@@ -606,25 +447,44 @@ class _BookingScreenState extends State<BookingScreen> {
   }
 
   Widget _buildTripSummaryCard() {
-    return _buildCard(
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            Color(0xFF2196F3),
+            Color(0xFF1976D2),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF2196F3).withOpacity(0.3),
+            blurRadius: 20,
+            offset: const Offset(0, 10),
+          ),
+        ],
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
               Container(
-                padding: const EdgeInsets.all(12),
+                padding: const EdgeInsets.all(14),
                 decoration: BoxDecoration(
-                  color: Colors.blue[50],
-                  borderRadius: BorderRadius.circular(12),
+                  color: Colors.white.withOpacity(0.2),
+                  borderRadius: BorderRadius.circular(16),
                 ),
-                child: Icon(
-                  Icons.directions_bus,
-                  color: Colors.blue[700],
+                child: const Icon(
+                  Icons.directions_bus_rounded,
+                  color: Colors.white,
                   size: 28,
                 ),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: 14),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -632,97 +492,179 @@ class _BookingScreenState extends State<BookingScreen> {
                     Text(
                       widget.busName,
                       style: const TextStyle(
-                        fontSize: 18,
+                        fontSize: 20,
                         fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                        letterSpacing: -0.5,
                       ),
                     ),
                     if (widget.date != null)
-                      Text(
-                        widget.date!,
-                        style: TextStyle(fontSize: 14, color: Colors.grey[600]),
+                      const SizedBox(height: 4),
+                    if (widget.date != null)
+                      Row(
+                        children: [
+                          const Icon(
+                            Icons.calendar_today_rounded,
+                            size: 14,
+                            color: Colors.white70,
+                          ),
+                          const SizedBox(width: 6),
+                          Text(
+                            widget.date!,
+                            style: const TextStyle(
+                              fontSize: 14,
+                              color: Colors.white70,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ],
                       ),
                   ],
                 ),
               ),
             ],
           ),
+          
           if (widget.departure != null && widget.arrival != null) ...[
-            const SizedBox(height: 16),
-            Row(
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        "From",
-                        style: TextStyle(fontSize: 12, color: Colors.grey[600]),
-                      ),
-                      Text(
-                        widget.departure!,
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
+            const SizedBox(height: 20),
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.15),
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          "From",
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: Colors.white.withOpacity(0.8),
+                            fontWeight: FontWeight.w500,
+                            letterSpacing: 0.5,
+                          ),
                         ),
-                      ),
-                    ],
-                  ),
-                ),
-                Icon(Icons.arrow_forward, color: Colors.grey[400]),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: [
-                      Text(
-                        "To",
-                        style: TextStyle(fontSize: 12, color: Colors.grey[600]),
-                      ),
-                      Text(
-                        widget.arrival!,
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
+                        const SizedBox(height: 4),
+                        Text(
+                          widget.departure!,
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
                         ),
-                        textAlign: TextAlign.right,
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
-                ),
-              ],
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.2),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      Icons.arrow_forward_rounded,
+                      color: Colors.white,
+                      size: 18,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        Text(
+                          "To",
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: Colors.white.withOpacity(0.8),
+                            fontWeight: FontWeight.w500,
+                            letterSpacing: 0.5,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          widget.arrival!,
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
+                          textAlign: TextAlign.right,
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
             ),
           ],
-          const Divider(height: 24),
+          
+          const SizedBox(height: 20),
+          Container(
+            height: 1,
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  Colors.white.withOpacity(0.0),
+                  Colors.white.withOpacity(0.3),
+                  Colors.white.withOpacity(0.0),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
+          
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
                 "Price per seat",
-                style: TextStyle(fontSize: 14, color: Colors.grey[600]),
+                style: TextStyle(
+                  fontSize: 13,
+                  color: Colors.white.withOpacity(0.8),
+                  fontWeight: FontWeight.w500,
+                ),
               ),
               Text(
                 "\$${widget.price.replaceAll('\$', '')}",
                 style: const TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
+                  color: Colors.white,
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 12),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
                 "Total Amount",
-                style: TextStyle(fontSize: 14, color: Colors.grey[600]),
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Colors.white.withOpacity(0.9),
+                  fontWeight: FontWeight.w600,
+                ),
               ),
-              Text(
-                "\$${_calculateTotal().toStringAsFixed(2)}",
-                style: const TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.blue,
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Text(
+                  "\$${_calculateTotal().toStringAsFixed(2)}",
+                  style: const TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF2196F3),
+                  ),
                 ),
               ),
             ],
@@ -735,11 +677,26 @@ class _BookingScreenState extends State<BookingScreen> {
   Widget _buildSectionHeader(String title, IconData icon) {
     return Row(
       children: [
-        Icon(icon, size: 24, color: Colors.grey[700]),
-        const SizedBox(width: 8),
+        Container(
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: const Color(0xFF2196F3).withOpacity(0.1),
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Icon(
+            icon,
+            size: 20,
+            color: const Color(0xFF2196F3),
+          ),
+        ),
+        const SizedBox(width: 12),
         Text(
           title,
-          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          style: const TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+            letterSpacing: -0.5,
+          ),
         ),
       ],
     );
@@ -748,15 +705,16 @@ class _BookingScreenState extends State<BookingScreen> {
   Widget _buildCard({required Widget child}) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: Colors.grey[200]!),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 2),
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 15,
+            offset: const Offset(0, 4),
           ),
         ],
       ),
@@ -764,79 +722,160 @@ class _BookingScreenState extends State<BookingScreen> {
     );
   }
 
-  InputDecoration _inputDecoration(String label, String hint, IconData icon) {
-    return InputDecoration(
-      labelText: label,
-      hintText: hint,
-      prefixIcon: Icon(icon, size: 20),
-      border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(8),
-        borderSide: BorderSide(color: Colors.grey[300]!),
+  Widget _buildTextField({
+    required TextEditingController controller,
+    String? Function(String?)? validator,
+    required String label,
+    required String hint,
+    required IconData icon,
+    TextInputType? keyboardType,
+    List<TextInputFormatter>? inputFormatters,
+    TextCapitalization? textCapitalization,
+    void Function(String)? onChanged,
+  }) {
+    return TextFormField(
+      controller: controller,
+      validator: validator,
+      keyboardType: keyboardType,
+      inputFormatters: inputFormatters,
+      textCapitalization: textCapitalization ?? TextCapitalization.none,
+      onChanged: onChanged,
+      style: const TextStyle(
+        fontSize: 15,
+        fontWeight: FontWeight.w500,
       ),
-      enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(8),
-        borderSide: BorderSide(color: Colors.grey[300]!),
+      decoration: InputDecoration(
+        labelText: label,
+        hintText: hint,
+        hintStyle: TextStyle(color: Colors.grey[400]),
+        prefixIcon: Container(
+          margin: const EdgeInsets.all(12),
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: const Color(0xFF2196F3).withOpacity(0.1),
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Icon(
+            icon,
+            size: 20,
+            color: const Color(0xFF2196F3),
+          ),
+        ),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+          borderSide: BorderSide(color: Colors.grey[300]!),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+          borderSide: BorderSide(color: Colors.grey[300]!),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+          borderSide: const BorderSide(color: Color(0xFF2196F3), width: 2),
+        ),
+        errorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+          borderSide: const BorderSide(color: Color(0xFFE53935)),
+        ),
+        focusedErrorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+          borderSide: const BorderSide(color: Color(0xFFE53935), width: 2),
+        ),
+        filled: true,
+        fillColor: Colors.grey[50],
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
       ),
-      focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(8),
-        borderSide: const BorderSide(color: Colors.blue, width: 2),
-      ),
-      errorBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(8),
-        borderSide: const BorderSide(color: Colors.red),
-      ),
-      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
     );
   }
 
-  Widget _buildPaymentOption(String value, String title, IconData icon) {
-    final isSelected = _selectedPaymentMethod == value;
-    return InkWell(
-      onTap: () => setState(() => _selectedPaymentMethod = value),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-        child: Row(
-          children: [
-            Container(
-              width: 20,
-              height: 20,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                border: Border.all(
-                  color: isSelected ? Colors.blue : Colors.grey[400]!,
-                  width: 2,
-                ),
-              ),
-              child: isSelected
-                  ? Center(
-                      child: Container(
-                        width: 10,
-                        height: 10,
-                        decoration: const BoxDecoration(
-                          color: Colors.blue,
-                          shape: BoxShape.circle,
-                        ),
-                      ),
-                    )
-                  : null,
-            ),
-            const SizedBox(width: 12),
-            Icon(
-              icon,
-              color: isSelected ? Colors.blue : Colors.grey[600],
-              size: 24,
-            ),
-            const SizedBox(width: 12),
-            Text(
-              title,
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
-                color: isSelected ? Colors.blue : Colors.grey[800],
-              ),
-            ),
-          ],
+  Widget _buildDropdown({
+    required String value,
+    required String label,
+    required IconData icon,
+    required List<String> items,
+    required void Function(String?) onChanged,
+  }) {
+    return DropdownButtonFormField<String>(
+      value: value,
+      decoration: InputDecoration(
+        labelText: label,
+        prefixIcon: Container(
+          margin: const EdgeInsets.all(12),
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: const Color(0xFF2196F3).withOpacity(0.1),
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Icon(
+            icon,
+            size: 20,
+            color: const Color(0xFF2196F3),
+          ),
         ),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+          borderSide: BorderSide(color: Colors.grey[300]!),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+          borderSide: BorderSide(color: Colors.grey[300]!),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+          borderSide: const BorderSide(color: Color(0xFF2196F3), width: 2),
+        ),
+        filled: true,
+        fillColor: Colors.grey[50],
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+      ),
+      items: items.map((item) => DropdownMenuItem(
+        value: item,
+        child: Text(item, style: const TextStyle(fontWeight: FontWeight.w500)),
+      )).toList(),
+      onChanged: onChanged,
+    );
+  }
+
+  Widget _buildSecurityBadge() {
+    return _buildCard(
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: const Color(0xFF4CAF50).withOpacity(0.15),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: const Icon(
+              Icons.verified_user_rounded,
+              size: 24,
+              color: Color(0xFF4CAF50),
+            ),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  "Secure Payment",
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  "Your payment is secured with 256-bit encryption",
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Colors.grey[600],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -848,130 +887,91 @@ class _BookingScreenState extends State<BookingScreen> {
         color: Colors.white,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 10,
-            offset: const Offset(0, -2),
+            color: Colors.black.withOpacity(0.08),
+            blurRadius: 20,
+            offset: const Offset(0, -4),
           ),
         ],
       ),
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(20),
       child: SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
+        child: Row(
           children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      "Total Amount",
-                      style: TextStyle(fontSize: 14, color: Colors.grey[600]),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    "Total Amount",
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Colors.grey[600],
+                      fontWeight: FontWeight.w500,
                     ),
-                    Text(
-                      "\$${total.toStringAsFixed(2)}",
-                      style: const TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.blue,
-                      ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    "\$${total.toStringAsFixed(2)}",
+                    style: const TextStyle(
+                      fontSize: 28,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF2196F3),
+                      height: 1.2,
+                      letterSpacing: -1,
                     ),
-                  ],
-                ),
-                ElevatedButton(
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              flex: 2,
+              child: SizedBox(
+                height: 58,
+                child: ElevatedButton(
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.blue,
+                    backgroundColor: const Color(0xFF2196F3),
                     foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 32,
-                      vertical: 16,
-                    ),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
                     elevation: 0,
+                    shadowColor: const Color(0xFF2196F3).withOpacity(0.4),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
                   ),
                   onPressed: _bookingController.isLoading.value
                       ? null
                       : _processBooking,
                   child: _bookingController.isLoading.value
                       ? const SizedBox(
-                          width: 20,
-                          height: 20,
+                          width: 24,
+                          height: 24,
                           child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            valueColor: AlwaysStoppedAnimation<Color>(
-                              Colors.white,
-                            ),
+                            strokeWidth: 2.5,
+                            valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
                           ),
                         )
                       : const Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             Text(
-                              "Confirm & Pay",
+                              "Continue to Payment",
                               style: TextStyle(
                                 fontSize: 16,
-                                fontWeight: FontWeight.bold,
+                                fontWeight: FontWeight.w600,
+                                letterSpacing: 0.2,
                               ),
                             ),
                             SizedBox(width: 8),
-                            Icon(Icons.arrow_forward, size: 20),
+                            Icon(Icons.arrow_forward_rounded, size: 20),
                           ],
                         ),
                 ),
-              ],
+              ),
             ),
           ],
         ),
       ),
-    );
-  }
-}
-
-// Card number formatter
-class _CardNumberFormatter extends TextInputFormatter {
-  @override
-  TextEditingValue formatEditUpdate(
-    TextEditingValue oldValue,
-    TextEditingValue newValue,
-  ) {
-    final text = newValue.text.replaceAll(' ', '');
-    final buffer = StringBuffer();
-    for (int i = 0; i < text.length; i++) {
-      buffer.write(text[i]);
-      if ((i + 1) % 4 == 0 && i + 1 != text.length) {
-        buffer.write(' ');
-      }
-    }
-    return TextEditingValue(
-      text: buffer.toString(),
-      selection: TextSelection.collapsed(offset: buffer.length),
-    );
-  }
-}
-
-// Expiry date formatter
-class _ExpiryDateFormatter extends TextInputFormatter {
-  @override
-  TextEditingValue formatEditUpdate(
-    TextEditingValue oldValue,
-    TextEditingValue newValue,
-  ) {
-    final text = newValue.text.replaceAll('/', '');
-    if (text.length > 4) {
-      return oldValue;
-    }
-    final buffer = StringBuffer();
-    for (int i = 0; i < text.length; i++) {
-      buffer.write(text[i]);
-      if (i == 1 && text.length > 2) {
-        buffer.write('/');
-      }
-    }
-    return TextEditingValue(
-      text: buffer.toString(),
-      selection: TextSelection.collapsed(offset: buffer.length),
     );
   }
 }

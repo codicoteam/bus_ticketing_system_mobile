@@ -66,9 +66,6 @@ TicketDownloadResponse _handleWebDownload(Uint8List pdfData, String bookingId) {
     final fileName = 'bus_ticket_$bookingId.pdf';
     
     // Create and trigger download
-    final anchor = html.AnchorElement(href: url)
-      ..setAttribute('download', fileName)
-      ..click();
     
     // Clean up
     html.Url.revokeObjectUrl(url);
@@ -115,35 +112,6 @@ Future<TicketDownloadResponse> _handleMobileDownload(Uint8List pdfData, String b
 }
 
   // Save PDF to device storage
-  Future<String> _savePdfToDevice(Uint8List pdfData, String bookingId) async {
-    try {
-      // Request storage permission
-      final status = await Permission.storage.request();
-      if (!status.isGranted) {
-        throw Exception('Storage permission denied');
-      }
-
-      // Get downloads directory
-      final directory = await getDownloadsDirectory();
-      if (directory == null) {
-        throw Exception('Could not access downloads directory');
-      }
-
-      // Create file path
-      final fileName = 'bus_ticket_$bookingId.pdf';
-      final filePath = '${directory.path}/$fileName';
-      final file = File(filePath);
-
-      // Write PDF data to file
-      await file.writeAsBytes(pdfData);
-      
-      print('PDF saved to: $filePath');
-      return filePath;
-    } catch (e) {
-      print('Error saving PDF: $e');
-      rethrow;
-    }
-  }
 
   // Email ticket to customer with improved error handling
   Future<TicketEmailResponse> emailTicket(String bookingId) async {

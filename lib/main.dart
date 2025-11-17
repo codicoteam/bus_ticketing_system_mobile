@@ -35,7 +35,7 @@ class BusTicketApp extends StatelessWidget {
       // 🎯 QUICK SWITCH - COMMENT/UNCOMMENT THESE LINES AS NEEDED:
       
       // Option 1: For normal flow (splash → onboarding → signup)
-      //home: onboardingCompleted ? const SignUpScreen() : const SplashScreen(),
+      home: onboardingCompleted ? const SignUpScreen() : const SplashScreen(),
       
       // Option 2: Direct to HomePage (skip everything)
       // home: const HomeScreen(),
@@ -44,7 +44,7 @@ class BusTicketApp extends StatelessWidget {
       // home: const SignUpScreen(),
       
       // Option 4: Direct to LoginScreen
-       home: const LoginScreen(),
+       //home: const LoginScreen(),
       
       // Option 5: Start from SplashScreen (full flow)
       // home: const SplashScreen(),

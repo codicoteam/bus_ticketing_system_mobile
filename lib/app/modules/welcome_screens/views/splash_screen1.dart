@@ -86,7 +86,7 @@ class _SplashScreenState extends State<SplashScreen>
     });
 
     // Navigate to next screen after 3 seconds
-    Timer(const Duration(seconds: 3), () {
+    Timer(const Duration(seconds: 30), () {
       if (mounted) {
         Navigator.pushReplacement(
           context,

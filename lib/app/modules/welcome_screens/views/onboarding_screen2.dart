@@ -1,7 +1,8 @@
 // ignore_for_file: deprecated_member_use
 
 import 'package:flutter/material.dart';
-import '../../auth/views/signup_screen.dart'; // Ensure this file exists for navigation
+import '../../auth/views/login_screen.dart';
+
 
 class OnboardingScreen2 extends StatefulWidget {
   const OnboardingScreen2({super.key});
@@ -232,7 +233,7 @@ class _OnboardingScreenState extends State<OnboardingScreen2> {
   void _navigateToSignIn(BuildContext context) {
     Navigator.pushReplacement(
       context,
-      MaterialPageRoute(builder: (_) => const SignUpScreen()),
+      MaterialPageRoute(builder: (_) => const LoginScreen()),
     );
   }
 }

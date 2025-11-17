@@ -1,6 +1,5 @@
 // lib/app/controllers/trip_controller.dart
 import 'dart:convert';
-
 import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
 import '../../../data/models/trip_models.dart';
@@ -44,53 +43,27 @@ class TripController extends GetxController {
     }
   }
 
-// Add this temporary method to your TripController to test
-Future<void> testTripParsing() async {
-  try {
-    final response = await http.get(
-      Uri.parse('https://busticketing-tq3o.onrender.com/api/trips'),
-    );
-    
-    final responseData = json.decode(response.body);
-    print('API Response Type: ${responseData.runtimeType}');
-    
-    if (responseData is List) {
-      print('First trip sample:');
-      final firstTrip = Trip.fromJson(responseData[0]);
-      print('Trip ID: ${firstTrip.id}');
-      print('Departure: ${firstTrip.departureTime}');
-      print('Arrival: ${firstTrip.arrivalTime}');
-      print('Fare: ${firstTrip.fare}');
-      print('Bus: ${firstTrip.bus?.busNumber}');
-      print('Route: ${firstTrip.route?.origin} → ${firstTrip.route?.destination}');
-    }
-  } catch (e) {
-    print('Test Parsing Error: $e');
+  // Add this method to show all trips
+  void showAllTrips() {
+    filteredTrips.value = trips;
+    errorMessage.value = '';
   }
-}
 
-
-// Add this to your TripController for testing
-Future<void> testTripAPI() async {
-  try {
-    final response = await http.get(
-      Uri.parse('https://busticketing-tq3o.onrender.com/api/trips'),
-    );
-    print('RAW TRIPS API RESPONSE: ${response.body}');
-    print('RESPONSE TYPE: ${response.body.runtimeType}');
-    
-    final decoded = json.decode(response.body);
-    print('DECODED TYPE: ${decoded.runtimeType}');
-    print('DECODED CONTENT: $decoded');
-  } catch (e) {
-    print('TEST ERROR: $e');
-  }
-}
-
-// Call this in initState of TripsScreen temporarily
-
-
+  // UPDATED searchTrips method to handle empty search
   Future<void> searchTrips(String from, String to) async {
+    // If both are empty, show all trips
+    if (from.isEmpty && to.isEmpty) {
+      showAllTrips();
+      return;
+    }
+    
+    // If only one field is filled, show error
+    if (from.isEmpty || to.isEmpty) {
+      errorMessage.value = 'Please enter both origin and destination';
+      filteredTrips.clear();
+      return;
+    }
+
     try {
       isLoading.value = true;
       errorMessage.value = '';
@@ -112,7 +85,6 @@ Future<void> testTripAPI() async {
   }
 
   void filterByTime(String timeFilter) {
-    
     switch (timeFilter) {
       case 'morning':
         filteredTrips.value = trips.where((trip) => 
@@ -151,6 +123,47 @@ Future<void> testTripAPI() async {
         break;
       default:
         filteredTrips.sort((a, b) => a.departureTime.compareTo(b.departureTime));
+    }
+  }
+
+  // TESTING METHODS (optional - you can remove these if not needed)
+  Future<void> testTripParsing() async {
+    try {
+      final response = await http.get(
+        Uri.parse('https://busticketing-tq3o.onrender.com/api/trips'),
+      );
+      
+      final responseData = json.decode(response.body);
+      print('API Response Type: ${responseData.runtimeType}');
+      
+      if (responseData is List) {
+        print('First trip sample:');
+        final firstTrip = Trip.fromJson(responseData[0]);
+        print('Trip ID: ${firstTrip.id}');
+        print('Departure: ${firstTrip.departureTime}');
+        print('Arrival: ${firstTrip.arrivalTime}');
+        print('Fare: ${firstTrip.fare}');
+        print('Bus: ${firstTrip.bus?.busNumber}');
+        print('Route: ${firstTrip.route?.origin} → ${firstTrip.route?.destination}');
+      }
+    } catch (e) {
+      print('Test Parsing Error: $e');
+    }
+  }
+
+  Future<void> testTripAPI() async {
+    try {
+      final response = await http.get(
+        Uri.parse('https://busticketing-tq3o.onrender.com/api/trips'),
+      );
+      print('RAW TRIPS API RESPONSE: ${response.body}');
+      print('RESPONSE TYPE: ${response.body.runtimeType}');
+      
+      final decoded = json.decode(response.body);
+      print('DECODED TYPE: ${decoded.runtimeType}');
+      print('DECODED CONTENT: $decoded');
+    } catch (e) {
+      print('TEST ERROR: $e');
     }
   }
 }
