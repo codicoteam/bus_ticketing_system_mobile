@@ -796,7 +796,7 @@ class _BookingScreenState extends State<BookingScreen> with SingleTickerProvider
     required void Function(String?) onChanged,
   }) {
     return DropdownButtonFormField<String>(
-      value: value,
+      initialValue: value,
       decoration: InputDecoration(
         labelText: label,
         prefixIcon: Container(

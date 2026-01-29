@@ -771,7 +771,7 @@ Widget _buildRouteCard(BusRoute route, int index) {
 // Helper function to abbreviate long location names
 String _abbreviateLocation(String location) {
   if (location.length > 12) {
-    return location.substring(0, 10) + '...';
+    return '${location.substring(0, 10)}...';
   }
   return location;
 }
